@@ -138,6 +138,11 @@ CORS_ALLOWED_ORIGINS = [
 # Gemini API Key - ottienila su https://aistudio.google.com
 GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
+# Local LLM (Llama) settings
+LOCAL_LLM_MODEL = os.getenv('LOCAL_LLM_MODEL', 'meta-llama/Llama-3.2-3B-Instruct')
+LOCAL_LLM_FALLBACK_MODEL = os.getenv('LOCAL_LLM_FALLBACK_MODEL', 'TinyLlama/TinyLlama-1.1B-Chat-v1.0')
+LOCAL_LLM_MAX_NEW_TOKENS = int(os.getenv('LOCAL_LLM_MAX_NEW_TOKENS', '512'))
+
 # Upload PDF fino a 20MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024

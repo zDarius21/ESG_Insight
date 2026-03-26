@@ -1,12 +1,12 @@
 import json
 import re
-import time
+from datetime import datetime
 import numpy as np
 import faiss
 import fitz  # PyMuPDF
 import pdfplumber
-from google import genai
-from google.genai import types as genai_types
+import torch
+from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from django.conf import settings
 from django.http import JsonResponse
@@ -47,6 +47,163 @@ LAW_DATABASE = [
      "text": "ESRS E1 riguarda la rendicontazione sui cambiamenti climatici. Disclosure obbligatorie: emissioni GHG Scope 1, 2 e 3, target di riduzione allineati a 1.5°C (SBTi), intensità carbonica, investimenti green taxonomy-aligned."},
     {"id": "DLGS_231", "title": "D.Lgs 231/2001 - Responsabilità Amministrativa Enti",
      "text": "Il D.Lgs 231/2001 disciplina la responsabilità amministrativa delle persone giuridiche. Esimente: adozione di un Modello di Organizzazione e Gestione (MOG). Il MOG deve includere mappatura aree a rischio, protocolli di controllo, Organismo di Vigilanza (OdV)."},
+]
+
+LAW_COMPLIANCE_RULES = {
+    "CSRD - Corporate Sustainability Reporting Directive": {
+        "must_groups": [
+            ["csrd", "corporate sustainability reporting directive"],
+            ["doppia materialita", "double materiality", "materialita"],
+            ["esrs", "european sustainability reporting standards"],
+            ["scope 1", "scope 2"],
+        ],
+        "actions": [
+            "Documentare metodologia di doppia materialita con stakeholder engagement tracciato.",
+            "Allineare il report ai requisiti ESRS con evidenze per ogni disclosure.",
+        ],
+    },
+    "EU Taxonomy Regulation (2020/852)": {
+        "must_groups": [
+            ["taxonomy", "tassonomia"],
+            ["dnsh", "do no significant harm"],
+            ["social safeguards", "garanzie sociali"],
+            ["quota", "allineati", "capex", "opex", "ricavi allineati"],
+        ],
+        "actions": [
+            "Aggiungere evidenze DNSH per le attivita dichiarate allineate alla tassonomia.",
+            "Documentare social safeguards e metodo di calcolo KPI taxonomy (ricavi/capex/opex).",
+        ],
+    },
+    "ISO 14001:2015 - Sistemi di Gestione Ambientale": {
+        "must_groups": [
+            ["iso 14001"],
+            ["audit interno", "audit ambientale"],
+            ["non conformita", "azioni correttive"],
+            ["obiettivi ambientali", "aspetti ambientali"],
+        ],
+        "actions": [
+            "Esplicitare obiettivi ambientali misurabili, audit e chiusura non conformita.",
+        ],
+    },
+    "ISO 45001:2018 - Salute e Sicurezza sul Lavoro": {
+        "must_groups": [
+            ["iso 45001"],
+            ["infortuni", "ifr", "indice frequenza"],
+            ["rischi", "valutazione rischi"],
+            ["audit interno", "azioni correttive"],
+        ],
+        "actions": [
+            "Integrare indicatori SSL (IFR/gravita) con trend, target e piani correttivi.",
+        ],
+    },
+    "ISO 27001:2022 - Sicurezza delle Informazioni": {
+        "must_groups": [
+            ["iso 27001", "isms"],
+            ["risk assessment", "valutazione rischio", "rischio informatico"],
+            ["data breach", "incidenti"],
+            ["business continuity", "disaster recovery"],
+        ],
+        "actions": [
+            "Completare certificazione ISO 27001 e formalizzare gestione incidenti/data breach.",
+        ],
+    },
+    "GRI Standards 2021 - Global Reporting Initiative": {
+        "must_groups": [
+            ["gri"],
+            ["gri 2", "general disclosures"],
+            ["gri 3", "material topics"],
+            ["gri 300", "environmental"],
+            ["gri 400", "social"],
+        ],
+        "actions": [
+            "Completare disclosure GRI 300 e GRI 400 con KPI e perimetro metodologico.",
+        ],
+    },
+    "D.Lgs 254/2016 - Dichiarazione Non Finanziaria (DNF)": {
+        "must_groups": [
+            ["dnf", "dichiarazione non finanziaria", "d.lgs 254"],
+            ["ambiente", "emissioni"],
+            ["sociale", "lavoratori", "diritti umani"],
+            ["anticorruzione"],
+        ],
+        "actions": [
+            "Integrare sezione DNF su anticorruzione, diritti umani e metriche sociali complete.",
+        ],
+    },
+    "ESRS E1 - Cambiamenti Climatici": {
+        "must_groups": [
+            ["esrs e1", "cambiamenti climatici"],
+            ["scope 1", "scope 2", "scope 3"],
+            ["target", "1.5", "riduzione emissioni"],
+            ["rischi fisici", "transizione"],
+        ],
+        "actions": [
+            "Rendere completa la rendicontazione Scope 3 e piano di transizione climatica con milestone.",
+        ],
+    },
+}
+
+DOC_TYPE_TO_LAWS = {
+    "Bilancio ESG": [
+        "CSRD - Corporate Sustainability Reporting Directive",
+        "EU Taxonomy Regulation (2020/852)",
+        "GRI Standards 2021 - Global Reporting Initiative",
+        "D.Lgs 254/2016 - Dichiarazione Non Finanziaria (DNF)",
+        "ESRS E1 - Cambiamenti Climatici",
+    ],
+    "DNF": ["D.Lgs 254/2016 - Dichiarazione Non Finanziaria (DNF)"],
+    "ISO 14001": ["ISO 14001:2015 - Sistemi di Gestione Ambientale"],
+    "ISO 45001": ["ISO 45001:2018 - Salute e Sicurezza sul Lavoro"],
+    "ISO 27001": ["ISO 27001:2022 - Sicurezza delle Informazioni"],
+}
+
+LAW_ALIASES = {
+    "CSRD - Corporate Sustainability Reporting Directive": [
+        "csrd",
+        "corporate sustainability reporting directive",
+        "direttiva 2022/2464",
+        "direttiva (ue) 2022/2464",
+    ],
+    "EU Taxonomy Regulation (2020/852)": [
+        "eu taxonomy",
+        "tassonomia",
+        "regolamento (ue) 2020/852",
+        "taxonomy regulation",
+    ],
+    "GRI Standards 2021 - Global Reporting Initiative": [
+        "gri standards",
+        "global reporting initiative",
+        "gri",
+    ],
+    "D.Lgs 254/2016 - Dichiarazione Non Finanziaria (DNF)": [
+        "d.lgs 254/2016",
+        "dichiarazione non finanziaria",
+        "dnf",
+        "direttiva 2014/95/ue",
+    ],
+    "ESRS E1 - Cambiamenti Climatici": [
+        "esrs e1",
+        "e1 cambiamenti climatici",
+        "european sustainability reporting standards e1",
+    ],
+}
+
+FORMAL_COMPLIANCE_MARKERS = [
+    "conforme",
+    "in conformita",
+    "redatto ai sensi",
+    "ai sensi",
+    "in ottemperanza",
+    "compliant",
+    "si certifica",
+]
+
+NEGATION_MARKERS = [
+    "non conforme",
+    "non in conformita",
+    "non compliant",
+    "assenza di conformita",
+    "mancata conformita",
 ]
 
 # ── Indice FAISS per normative (costruito una volta sola) ─────────────────────
@@ -135,32 +292,499 @@ def detect_document_type(text: str) -> list:
 
 
 def extract_kpis(text: str) -> list:
-    patterns = [r'\b\d+[\.,]?\d*\s*%', r'\b\d+[\.,]?\d*\s*(ton|kg|kwh|mwh|tco2)', r'€\s*\d+[\.,]?\d*']
+    patterns = [
+        r'\b\d+[\.,]?\d*\s*%',
+        r'\b\d+[\.,]?\d*\s*(?:ton|kg|kwh|mwh|co2|tco2)',
+        r'€\s*\d+[\.,]?\d*',
+        r'\b\d+[\.,]?\d*\s*(?:milioni|miliardi)',
+    ]
     kpis = []
     for p in patterns:
-        kpis.extend(re.findall(p, text.lower()))
-    return list(set([k if isinstance(k, str) else k[0] for k in kpis]))[:10]
+        matches = re.findall(p, text.lower())
+        for m in matches:
+            kpis.append(m[0] if isinstance(m, tuple) else m)
+    return list(set(kpis))[:10]
 
 
-GEMINI_MODEL = 'gemini-2.5-flash'
+LOCAL_LLM_MODEL = getattr(settings, "LOCAL_LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
+LOCAL_LLM_FALLBACK_MODEL = getattr(settings, "LOCAL_LLM_FALLBACK_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+LOCAL_LLM_MAX_NEW_TOKENS = int(getattr(settings, "LOCAL_LLM_MAX_NEW_TOKENS", 512))
+
+_llm_generator = None
+_llm_tokenizer = None
+_llm_loaded_model_name = None
 
 
-def get_gemini_client():
-    return genai.Client(api_key=settings.GEMINI_API_KEY)
+def _build_text_generation_pipeline(model_name: str):
+    tokenizer = AutoTokenizer.from_pretrained(model_name)
+    dtype = torch.float16 if torch.cuda.is_available() else torch.float32
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=dtype)
+    device = 0 if torch.cuda.is_available() else -1
+    text_generator = pipeline(
+        "text-generation",
+        model=model,
+        tokenizer=tokenizer,
+        device=device,
+    )
+    return text_generator, tokenizer
 
 
-def gemini_generate(prompt, retries=3):
-    """Chiama Gemini con retry automatico in caso di rate limit (429)."""
-    for attempt in range(retries):
+def get_local_llm():
+    global _llm_generator, _llm_tokenizer, _llm_loaded_model_name
+    if _llm_generator is not None:
+        return _llm_generator
+
+    errors = []
+    for candidate in [LOCAL_LLM_MODEL, LOCAL_LLM_FALLBACK_MODEL]:
+        if not candidate:
+            continue
         try:
-            client = get_gemini_client()
-            return client.models.generate_content(model=GEMINI_MODEL, contents=prompt)
-        except Exception as e:
-            if '429' in str(e) and attempt < retries - 1:
-                wait = 30 * (attempt + 1)
-                time.sleep(wait)
-            else:
-                raise
+            _llm_generator, _llm_tokenizer = _build_text_generation_pipeline(candidate)
+            _llm_loaded_model_name = candidate
+            return _llm_generator
+        except Exception as exc:
+            errors.append(f"{candidate}: {exc}")
+
+    raise RuntimeError(
+        "Impossibile caricare un modello Llama locale. "
+        f"Dettagli: {' | '.join(errors)}"
+    )
+
+
+def local_llama_generate(prompt: str, max_new_tokens: int = None, temperature: float = 0.2) -> str:
+    generator = get_local_llm()
+    max_tokens = max_new_tokens or LOCAL_LLM_MAX_NEW_TOKENS
+    output = generator(
+        prompt,
+        max_new_tokens=max_tokens,
+        do_sample=True,
+        temperature=temperature,
+        top_p=0.9,
+        repetition_penalty=1.1,
+        return_full_text=False,
+    )
+    return output[0]["generated_text"].strip()
+
+
+def _extract_json_from_text(raw_text: str):
+    if not raw_text:
+        return None
+
+    try:
+        return json.loads(raw_text)
+    except Exception:
+        pass
+
+    start = raw_text.find("{")
+    end = raw_text.rfind("}")
+    if start == -1 or end == -1 or end <= start:
+        return None
+
+    candidate = raw_text[start:end + 1]
+    try:
+        return json.loads(candidate)
+    except Exception:
+        return None
+
+
+def _normalize_summary_item(item):
+    if isinstance(item, str):
+        return {"norma": item, "motivo": ""}
+    if isinstance(item, dict):
+        norma = str(item.get("norma", "")).strip()
+        motivo = str(item.get("motivo", "")).strip()
+        return {"norma": norma, "motivo": motivo}
+    return {"norma": str(item), "motivo": ""}
+
+
+def _coerce_summary_list(payload: dict, key: str) -> list:
+    values = payload.get(key, [])
+    if not isinstance(values, list):
+        return []
+
+    out = []
+    seen = set()
+    for item in values:
+        norm_item = _normalize_summary_item(item)
+        norm_name = norm_item["norma"].strip()
+        if not norm_name:
+            continue
+        normalized_key = norm_name.lower()
+        if normalized_key in seen:
+            continue
+        seen.add(normalized_key)
+        out.append(norm_item)
+    return out
+
+
+def _iso_code_from_law_title(law_title: str) -> str:
+    if "ISO 14001" in law_title:
+        return "iso 14001"
+    if "ISO 45001" in law_title:
+        return "iso 45001"
+    if "ISO 27001" in law_title:
+        return "iso 27001"
+    if "ISO 9001" in law_title:
+        return "iso 9001"
+    return ""
+
+
+def _has_iso_certification_evidence(text_lower: str, iso_code: str) -> bool:
+    if not iso_code:
+        return False
+
+    certification_markers = [
+        "conforme allo standard",
+        "e conforme allo standard",
+        "certificato",
+        "certificazione",
+        "validita",
+    ]
+
+    # Cerca frasi tipiche dei certificati, anche con interruzioni di riga tra marker e codice ISO.
+    for marker in certification_markers:
+        pattern = rf"{re.escape(marker)}[\s\S]{{0,160}}{re.escape(iso_code)}"
+        m = re.search(pattern, text_lower, flags=re.IGNORECASE)
+        if m:
+            window = text_lower[max(0, m.start() - 50): min(len(text_lower), m.end() + 50)]
+            if not any(neg in window for neg in NEGATION_MARKERS):
+                return True
+
+    # Fallback: presenza del codice ISO insieme a parole tipiche di attestazione.
+    if iso_code in text_lower and ("si certifica" in text_lower or "certificazione" in text_lower):
+        for neg in NEGATION_MARKERS:
+            if neg in text_lower:
+                return False
+        return True
+
+    return False
+
+
+def _has_formal_law_attestation(text_lower: str, law_title: str) -> bool:
+    aliases = LAW_ALIASES.get(law_title, [])
+    if not aliases:
+        return False
+
+    for alias in aliases:
+        for marker in FORMAL_COMPLIANCE_MARKERS:
+            # Cerca attestazioni formali dove marker e riferimento normativo sono vicini.
+            p1 = rf"{re.escape(marker)}[\s\S]{{0,120}}{re.escape(alias)}"
+            p2 = rf"{re.escape(alias)}[\s\S]{{0,120}}{re.escape(marker)}"
+            m1 = re.search(p1, text_lower, flags=re.IGNORECASE)
+            if m1:
+                window = text_lower[max(0, m1.start() - 50): min(len(text_lower), m1.end() + 50)]
+                if not any(neg in window for neg in NEGATION_MARKERS):
+                    return True
+
+            m2 = re.search(p2, text_lower, flags=re.IGNORECASE)
+            if m2:
+                window = text_lower[max(0, m2.start() - 50): min(len(text_lower), m2.end() + 50)]
+                if not any(neg in window for neg in NEGATION_MARKERS):
+                    return True
+
+    return False
+
+
+def _evaluate_law_compliance(text_lower: str, law_title: str) -> tuple:
+    rules = LAW_COMPLIANCE_RULES.get(law_title)
+    if not rules:
+        return "non_rispettata", "Regole di valutazione non disponibili per questa norma.", []
+
+    must_groups = rules.get("must_groups", [])
+    if not must_groups:
+        return "non_rispettata", "Regole incomplete per la norma.", rules.get("actions", [])
+
+    iso_code = _iso_code_from_law_title(law_title)
+    if iso_code and _has_iso_certification_evidence(text_lower, iso_code):
+        return "rispettata", "Certificazione esplicita rilevata nel documento.", []
+
+    if _has_formal_law_attestation(text_lower, law_title):
+        return "rispettata", "Attestazione formale di conformita rilevata nel documento.", []
+
+    unmet_requirements = []
+    missing_groups = []
+    for group in must_groups:
+        if any(token in text_lower for token in group):
+            continue
+        else:
+            missing_groups.append(group[0])
+            unmet_requirements.append(group[0])
+
+    # Classificazione binaria: una norma e rispettata solo se tutti i requisiti chiave sono presenti.
+    if not unmet_requirements:
+        return "rispettata", "Requisiti chiave della norma presenti nel documento.", []
+
+    missing_preview = ", ".join(missing_groups[:3])
+    return "non_rispettata", f"Requisiti mancanti: {missing_preview}.", rules.get("actions", [])
+
+
+def _select_candidate_laws(text: str, chunks: list) -> list:
+    candidates = set()
+
+    for chunk in chunks:
+        for law in retrieve_relevant_laws(chunk, k=4):
+            candidates.add(law["title"])
+
+    for doc_type in detect_document_type(text):
+        for law_title in DOC_TYPE_TO_LAWS.get(doc_type, []):
+            candidates.add(law_title)
+
+    if not candidates:
+        for law in LAW_DATABASE:
+            candidates.add(law["title"])
+
+    return [title for title in candidates if title in {l["title"] for l in LAW_DATABASE}]
+
+
+def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
+    chunks = chunk_text(text)[:max_chunks]
+    if not chunks:
+        return {
+            "norme_rispettate": [],
+            "norme_non_rispettate": [],
+            "norme_borderline": [],
+            "azioni_correttive": ["Documento troppo corto o vuoto: fornire un contenuto piu completo."],
+            "raw_output": "",
+        }
+
+    text_lower = text.lower()
+    candidate_titles = _select_candidate_laws(text, chunks)
+
+    norme_rispettate = []
+    norme_non_rispettate = []
+    norme_borderline = []
+    azioni_correttive = []
+
+    for law_title in candidate_titles:
+        status, motivo, suggested_actions = _evaluate_law_compliance(text_lower, law_title)
+        item = {"norma": law_title, "motivo": motivo}
+
+        if status == "rispettata":
+            norme_rispettate.append(item)
+        else:
+            norme_non_rispettate.append(item)
+
+        azioni_correttive.extend(suggested_actions)
+
+    dedup_actions = []
+    seen_actions = set()
+    for action in azioni_correttive:
+        normalized = action.lower().strip()
+        if normalized and normalized not in seen_actions:
+            dedup_actions.append(action)
+            seen_actions.add(normalized)
+
+    if not dedup_actions:
+        dedup_actions = [
+            "Mappare ogni requisito normativo a evidenze documentali esplicite.",
+            "Inserire KPI misurabili (GHG Scope 1/2/3, target, metriche sociali e governance).",
+            "Definire piano di audit interno con responsabilita, scadenze e azioni correttive tracciate.",
+        ]
+
+    return {
+        "norme_rispettate": norme_rispettate,
+        "norme_non_rispettate": norme_non_rispettate,
+        "norme_borderline": norme_borderline,
+        "azioni_correttive": dedup_actions,
+        "raw_output": "rule_based_evaluation",
+    }
+
+
+def build_chat_prompt(messages: list) -> str:
+    system_prompt = (
+        "Sei un assistente esperto in ESG, compliance normativa e rendicontazione aziendale. "
+        "Rispondi in italiano in modo chiaro, pratico e conciso."
+    )
+    prompt_lines = [f"[SYSTEM]\n{system_prompt}"]
+
+    for m in messages:
+        role = "USER" if m.get("role") == "user" else "ASSISTANT"
+        content = m.get("content", "").strip()
+        if content:
+            prompt_lines.append(f"[{role}]\n{content}")
+
+    prompt_lines.append("[ASSISTANT]")
+    return "\n\n".join(prompt_lines)
+
+
+def build_compliance_prompt(doc_chunk: str, laws: list) -> str:
+    laws_text = "\n\n".join([f"[{law['title']}]\n{law['text']}" for law in laws])
+    return (
+        "Analizza la conformita del seguente estratto di documento tecnico rispetto alle normative indicate.\n\n"
+        f"ESTRATTO DOCUMENTO:\n{doc_chunk}\n\n"
+        f"NORMATIVE RILEVANTI:\n{laws_text}\n\n"
+        "Identifica:\n"
+        "1. Elementi conformi alle normative\n"
+        "2. Gap di conformita presenti\n"
+        "3. Rischi normativi\n"
+        "4. Azioni correttive raccomandate\n\n"
+        "Scrivi in italiano, in modo pratico e sintetico.\n\n"
+        "ANALISI:"
+    )
+
+
+def analyze_compliance_chunk(doc_chunk: str, k_laws: int = 3) -> dict:
+    relevant_laws = retrieve_relevant_laws(doc_chunk, k=k_laws)
+    prompt = build_compliance_prompt(doc_chunk[:1200], relevant_laws)
+    response_text = local_llama_generate(prompt, max_new_tokens=600, temperature=0.1)
+
+    return {
+        "normative_correlate": [law["title"] for law in relevant_laws],
+        "analisi": response_text,
+    }
+
+
+def aggregate_by_law(section_results: list) -> dict:
+    law_data = {}
+
+    for result in section_results:
+        for law_title in result["normative_correlate"]:
+            if law_title not in law_data:
+                law_data[law_title] = {
+                    "conformita": [],
+                    "gap": [],
+                    "azioni": [],
+                    "rischi": [],
+                }
+
+            analisi = result["analisi"]
+            lines = analisi.split("\n")
+            current_section = None
+
+            for line in lines:
+                row = line.strip()
+                if not row:
+                    continue
+                row_lower = row.lower()
+
+                if "elementi conformi" in row_lower or "conforme" in row_lower:
+                    current_section = "conformita"
+                elif "gap" in row_lower or "non conforme" in row_lower:
+                    current_section = "gap"
+                elif "azioni correttive" in row_lower or "raccomand" in row_lower:
+                    current_section = "azioni"
+                elif "rischi" in row_lower:
+                    current_section = "rischi"
+                elif row.startswith("-") or (len(row) > 2 and row[0].isdigit() and row[1] == "."):
+                    content = row.lstrip("-").lstrip("0123456789.").strip()
+                    if content and current_section:
+                        law_data[law_title][current_section].append(content)
+
+    for law_title, sections in law_data.items():
+        for section_name, values in sections.items():
+            deduped = []
+            seen = set()
+            for v in values:
+                normalized = v.lower()
+                if normalized not in seen:
+                    deduped.append(v)
+                    seen.add(normalized)
+            law_data[law_title][section_name] = deduped
+
+    return law_data
+
+
+def _build_chunk_index(chunks: list) -> tuple:
+    if not chunks:
+        return None, np.zeros((0, 1), dtype=np.float32)
+
+    embedder = get_embedder()
+    texts = [f"passage: {chunk}" for chunk in chunks]
+    embeddings = embedder.encode(texts, normalize_embeddings=True).astype(np.float32)
+    idx = faiss.IndexFlatIP(embeddings.shape[1])
+    idx.add(embeddings)
+    return idx, embeddings
+
+
+def retrieve_relevant_chunks(question: str, chunks: list, index, top_k: int = 4) -> list:
+    if index is None or not chunks:
+        return []
+
+    embedder = get_embedder()
+    query_embedding = embedder.encode([f"query: {question}"], normalize_embeddings=True).astype(np.float32)
+    limit = min(max(top_k, 1), len(chunks))
+    scores, indices = index.search(query_embedding, limit)
+
+    results = []
+    for score, idx in zip(scores[0], indices[0]):
+        if idx != -1:
+            results.append({
+                "text": chunks[idx],
+                "score": float(score),
+            })
+    return results
+
+
+def ask_esg(text: str, question: str, top_k: int = 4) -> dict:
+    chunks = chunk_text(text)
+    if not chunks:
+        return {"risposta": "Non ho trovato testo utile nel documento.", "fonti": []}
+
+    index, _ = _build_chunk_index(chunks)
+    relevant_chunks = retrieve_relevant_chunks(question, chunks, index, top_k=top_k)
+    context = "\n\n".join([f"[Chunk {i+1}]\n{item['text']}" for i, item in enumerate(relevant_chunks)])
+
+    prompt = (
+        "Sei un esperto di normative ESG europee. Rispondi alla domanda basandoti esclusivamente sul contesto. "
+        "Se l'informazione non e presente nel contesto, dichiaralo esplicitamente.\n\n"
+        f"CONTESTO:\n{context}\n\n"
+        f"DOMANDA: {question}\n\n"
+        "RISPOSTA:"
+    )
+    response_text = local_llama_generate(prompt, max_new_tokens=450, temperature=0.1)
+
+    return {
+        "risposta": response_text,
+        "fonti": [item["text"][:240] + "..." for item in relevant_chunks],
+    }
+
+
+def generate_compliance_report(text: str, max_sections: int = 5) -> dict:
+    doc_types = detect_document_type(text)
+    kpis = extract_kpis(text)
+    chunks = chunk_text(text)[:max_sections]
+
+    section_results = []
+    all_laws_cited = []
+
+    for i, chunk in enumerate(chunks):
+        analysis = analyze_compliance_chunk(chunk)
+        all_laws_cited.extend(analysis["normative_correlate"])
+
+        section_results.append({
+            "sezione": i + 1,
+            "testo_estratto": chunk[:200] + "...",
+            "normative_correlate": analysis["normative_correlate"],
+            "analisi": analysis["analisi"],
+        })
+
+    law_summary = aggregate_by_law(section_results)
+
+    return {
+        "metadata": {
+            "data_analisi": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "tipo_documento": doc_types,
+            "kpi_rilevati": kpis,
+            "normative_analizzate": list(set(all_laws_cited)),
+            "sezioni_analizzate": len(section_results),
+        },
+        "riepilogo_per_norma": law_summary,
+        "analisi_sezioni": section_results,
+    }
+
+
+def _extract_text_from_request(request):
+    if request.FILES.get('file'):
+        f = request.FILES['file']
+        if f.name.endswith('.pdf'):
+            return extract_text_from_pdf(f)
+        return f.read().decode('utf-8', errors='ignore')
+
+    if request.content_type == 'application/json':
+        data = json.loads(request.body)
+        return data.get('text', '')
+
+    return ''
 
 
 # ── VIEW: Chat semplice ────────────────────────────────────────────────────────
@@ -173,17 +797,9 @@ def chat(request):
         if not messages:
             return JsonResponse({'error': 'Nessun messaggio fornito'}, status=400)
 
-        client = get_gemini_client()
-        history = [
-            genai_types.Content(
-                role='user' if m['role'] == 'user' else 'model',
-                parts=[genai_types.Part(text=m['content'])]
-            )
-            for m in messages[:-1]
-        ]
-        session = client.chats.create(model=GEMINI_MODEL, history=history)
-        response = session.send_message(messages[-1]['content'])
-        return JsonResponse({'reply': response.text})
+        prompt = build_chat_prompt(messages)
+        reply = local_llama_generate(prompt, max_new_tokens=350, temperature=0.4)
+        return JsonResponse({'reply': reply, 'model': _llm_loaded_model_name})
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
@@ -194,69 +810,71 @@ def chat(request):
 @require_http_methods(["POST"])
 def analyze_document(request):
     try:
-        # Estrai testo
-        if request.FILES.get('file'):
-            f = request.FILES['file']
-            if f.name.endswith('.pdf'):
-                text = extract_text_from_pdf(f)
-            else:
-                text = f.read().decode('utf-8', errors='ignore')
-        elif request.content_type == 'application/json':
-            data = json.loads(request.body)
-            text = data.get('text', '')
-        else:
+        text = _extract_text_from_request(request)
+        if request.content_type != 'application/json' and not request.FILES.get('file'):
             return JsonResponse({'error': 'Invia un file PDF/TXT o testo JSON'}, status=400)
 
         if not text.strip():
             return JsonResponse({'error': 'Documento vuoto o non leggibile'}, status=400)
 
-        # Metadati
+        summary = summarize_compliance(text=text)
         doc_types = detect_document_type(text)
         kpis = extract_kpis(text)
-        chunks = chunk_text(text)[:5]  # max 5 sezioni per velocità
 
-        # Analisi per chunk
-        section_results = []
-        all_laws_cited = []
+        normative_analizzate = []
+        for item in summary["norme_rispettate"] + summary["norme_non_rispettate"] + summary["norme_borderline"]:
+            normative_analizzate.append(item["norma"])
 
-        for i, chunk in enumerate(chunks):
-            laws = retrieve_relevant_laws(chunk, k=3)
-            all_laws_cited.extend([l['title'] for l in laws])
+        unique_normative = list(dict.fromkeys(normative_analizzate))
 
-            laws_context = "\n\n".join([f"[{l['title']}]\n{l['text']}" for l in laws])
-            prompt = f"""Sei un esperto di normative ESG, ISO e compliance aziendale.
-Analizza il seguente estratto di documento rispetto alle normative indicate.
-
-ESTRATTO:
-{chunk[:800]}
-
-NORMATIVE RILEVANTI:
-{laws_context}
-
-Rispondi in italiano con:
-1. ✅ Elementi conformi
-2. ⚠️ Gap di conformità
-3. 🔧 Azioni correttive raccomandate
-
-Sii conciso e specifico."""
-
-            resp = gemini_generate(prompt)
-            section_results.append({
-                "sezione": i + 1,
-                "testo_estratto": chunk[:200] + "...",
-                "normative_correlate": [l['title'] for l in laws],
-                "analisi": resp.text,
-            })
-
-        report = {
+        # La risposta principale e senza sezioni, come richiesto.
+        # Manteniamo i campi legacy per non rompere il frontend esistente.
+        response_payload = {
             "tipo_documento": doc_types,
             "kpi_rilevati": kpis,
-            "normative_analizzate": list(set(all_laws_cited)),
-            "totale_sezioni": len(section_results),
-            "sezioni": section_results,
+            "normative_analizzate": unique_normative,
+            "totale_sezioni": 0,
+            "sezioni": [],
+            "metadata": {
+                "data_analisi": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "tipo_documento": doc_types,
+                "kpi_rilevati": kpis,
+                "normative_analizzate": unique_normative,
+                "sezioni_analizzate": 0,
+            },
+            "riepilogo_per_norma": {},
+            "analisi_sezioni": [],
+            "norme_rispettate": summary["norme_rispettate"],
+            "norme_non_rispettate": summary["norme_non_rispettate"],
+            "norme_borderline": summary["norme_borderline"],
+            "azioni_correttive": summary["azioni_correttive"],
         }
 
-        return JsonResponse(report)
+        return JsonResponse(response_payload)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def ask_document(request):
+    try:
+        if request.content_type == 'application/json':
+            data = json.loads(request.body)
+            text = data.get('text', '')
+            question = data.get('question', '')
+        else:
+            text = _extract_text_from_request(request)
+            question = request.POST.get('question', '')
+
+        if not text.strip():
+            return JsonResponse({'error': 'Documento vuoto o non leggibile'}, status=400)
+        if not question.strip():
+            return JsonResponse({'error': 'Domanda mancante'}, status=400)
+
+        answer = ask_esg(text=text, question=question, top_k=4)
+        return JsonResponse(answer)
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
