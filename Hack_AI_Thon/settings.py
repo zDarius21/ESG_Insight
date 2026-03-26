@@ -143,6 +143,12 @@ LOCAL_LLM_MODEL = os.getenv('LOCAL_LLM_MODEL', 'meta-llama/Llama-3.2-3B-Instruct
 LOCAL_LLM_FALLBACK_MODEL = os.getenv('LOCAL_LLM_FALLBACK_MODEL', 'TinyLlama/TinyLlama-1.1B-Chat-v1.0')
 LOCAL_LLM_MAX_NEW_TOKENS = int(os.getenv('LOCAL_LLM_MAX_NEW_TOKENS', '512'))
 
-# Upload PDF fino a 20MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
-FILE_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
+# Upload multiplo PDF: limite request e file in memoria piu alto
+# per consentire l'analisi aggregata di piu documenti nello stesso invio.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024
+
+# Privacy: mantiene i file caricati in memoria (nessuna persistenza temporanea su disco)
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+]

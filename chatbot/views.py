@@ -1,5 +1,6 @@
 import json
 import re
+import hashlib
 from datetime import datetime
 import numpy as np
 import faiss
@@ -252,6 +253,43 @@ def extract_text_from_pdf(file) -> str:
                 if text:
                     full_text += f"\n\n--- PAGINA {i+1} ---\n{text}"
         return full_text
+
+
+def _stable_pseudonym(value: str, label: str) -> str:
+    digest = hashlib.sha256(value.encode("utf-8", errors="ignore")).hexdigest()[:10]
+    return f"[{label}_{digest}]"
+
+
+def run_file_etl_anonymization(raw_text: str) -> str:
+    # ETL applicata solo ai file utente:
+    # Extract: testo estratto dal file
+    # Transform: anonimizzazione dati sensibili
+    # Load: testo anonimizzato in-memory verso il modello
+    if not raw_text:
+        return ""
+
+    text = raw_text.replace("\r\n", "\n").replace("\r", "\n")
+
+    patterns = [
+        (r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "EMAIL"),
+        (r"\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b", "PHONE"),
+        (r"\bIT\d{2}[A-Z0-9]{11,30}\b", "IBAN"),
+        (r"\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b", "FISCAL_CODE"),
+        (r"\b(?:P\.?\s*IVA|Partita\s*IVA)\s*[:\-]?\s*\d{11}\b", "VAT"),
+        (r"\b\d{11}\b", "ID_NUMBER"),
+        (r"\b(?:via|viale|piazza|corso|largo)\s+[A-Za-zÀ-ÿ'\-\s]{3,80},?\s*\d{1,5}\b", "ADDRESS"),
+        (r"\bhttps?://[^\s]+\b", "URL"),
+    ]
+
+    for pattern, label in patterns:
+        def _replace(match):
+            return _stable_pseudonym(match.group(0), label)
+
+        text = re.sub(pattern, _replace, text, flags=re.IGNORECASE)
+
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
 
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
@@ -886,17 +924,44 @@ def generate_compliance_report(text: str, max_sections: int = 5) -> dict:
 
 
 def _extract_text_from_request(request):
-    if request.FILES.get('file'):
-        f = request.FILES['file']
-        if f.name.endswith('.pdf'):
-            return extract_text_from_pdf(f)
-        return f.read().decode('utf-8', errors='ignore')
+    uploaded_files = []
+    if request.FILES.getlist('files'):
+        uploaded_files = request.FILES.getlist('files')
+    elif request.FILES.get('file'):
+        uploaded_files = [request.FILES['file']]
+
+    if uploaded_files:
+        anonymized_documents = []
+        analyzed_file_names = []
+
+        for f in uploaded_files:
+            file_name = f.name
+            lower_name = file_name.lower()
+            if lower_name.endswith('.pdf'):
+                extracted_text = extract_text_from_pdf(f)
+            elif lower_name.endswith('.txt'):
+                extracted_text = f.read().decode('utf-8', errors='ignore')
+            else:
+                continue
+
+            try:
+                f.close()
+            except Exception:
+                pass
+
+            anonymized_text = run_file_etl_anonymization(extracted_text)
+            extracted_text = None
+            if anonymized_text.strip():
+                anonymized_documents.append(f"[DOCUMENTO: {file_name}]\n{anonymized_text}")
+                analyzed_file_names.append(file_name)
+
+        return "\n\n".join(anonymized_documents), True, analyzed_file_names
 
     if request.content_type == 'application/json':
         data = json.loads(request.body)
-        return data.get('text', '')
+        return data.get('text', ''), False, []
 
-    return ''
+    return '', False, []
 
 
 # ── VIEW: Chat semplice ────────────────────────────────────────────────────────
@@ -922,9 +987,13 @@ def chat(request):
 @require_http_methods(["POST"])
 def analyze_document(request):
     try:
-        text = _extract_text_from_request(request)
-        if request.content_type != 'application/json' and not request.FILES.get('file'):
+        text, from_file, analyzed_files = _extract_text_from_request(request)
+        has_uploaded_files = bool(request.FILES.getlist('files') or request.FILES.get('file'))
+        if request.content_type != 'application/json' and not has_uploaded_files:
             return JsonResponse({'error': 'Invia un file PDF/TXT o testo JSON'}, status=400)
+
+        if has_uploaded_files and not analyzed_files:
+            return JsonResponse({'error': 'Nessun file valido. Carica PDF o TXT leggibili.'}, status=400)
 
         if not text.strip():
             return JsonResponse({'error': 'Documento vuoto o non leggibile'}, status=400)
@@ -960,6 +1029,12 @@ def analyze_document(request):
             "norme_non_rispettate": summary["norme_non_rispettate"],
             "norme_borderline": summary["norme_borderline"],
             "azioni_correttive": summary["azioni_correttive"],
+            "privacy": {
+                "etl_anonymization_applied": from_file,
+                "raw_file_persisted": False,
+            },
+            "files_analizzati": analyzed_files,
+            "totale_file": len(analyzed_files),
         }
 
         return JsonResponse(response_payload)
@@ -977,7 +1052,7 @@ def ask_document(request):
             text = data.get('text', '')
             question = data.get('question', '')
         else:
-            text = _extract_text_from_request(request)
+            text, _, _ = _extract_text_from_request(request)
             question = request.POST.get('question', '')
 
         if not text.strip():
