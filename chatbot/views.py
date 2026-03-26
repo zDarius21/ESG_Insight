@@ -309,6 +309,7 @@ def extract_kpis(text: str) -> list:
 LOCAL_LLM_MODEL = getattr(settings, "LOCAL_LLM_MODEL", "meta-llama/Llama-3.2-3B-Instruct")
 LOCAL_LLM_FALLBACK_MODEL = getattr(settings, "LOCAL_LLM_FALLBACK_MODEL", "TinyLlama/TinyLlama-1.1B-Chat-v1.0")
 LOCAL_LLM_MAX_NEW_TOKENS = int(getattr(settings, "LOCAL_LLM_MAX_NEW_TOKENS", 512))
+MAX_SEMANTIC_EVALUATIONS = int(getattr(settings, "MAX_SEMANTIC_EVALUATIONS", 2))
 
 _llm_generator = None
 _llm_tokenizer = None
@@ -351,18 +352,25 @@ def get_local_llm():
     )
 
 
-def local_llama_generate(prompt: str, max_new_tokens: int = None, temperature: float = 0.2) -> str:
+def local_llama_generate(
+    prompt: str,
+    max_new_tokens: int = None,
+    temperature: float = 0.2,
+    do_sample: bool = True,
+) -> str:
     generator = get_local_llm()
     max_tokens = max_new_tokens or LOCAL_LLM_MAX_NEW_TOKENS
-    output = generator(
-        prompt,
-        max_new_tokens=max_tokens,
-        do_sample=True,
-        temperature=temperature,
-        top_p=0.9,
-        repetition_penalty=1.1,
-        return_full_text=False,
-    )
+    generation_kwargs = {
+        "max_new_tokens": max_tokens,
+        "do_sample": do_sample,
+        "repetition_penalty": 1.1,
+        "return_full_text": False,
+    }
+    if do_sample:
+        generation_kwargs["temperature"] = temperature
+        generation_kwargs["top_p"] = 0.9
+
+    output = generator(prompt, **generation_kwargs)
     return output[0]["generated_text"].strip()
 
 
@@ -518,22 +526,109 @@ def _evaluate_law_compliance(text_lower: str, law_title: str) -> tuple:
     return "non_rispettata", f"Requisiti mancanti: {missing_preview}.", rules.get("actions", [])
 
 
+def _find_law_by_title(law_title: str):
+    for law in LAW_DATABASE:
+        if law["title"] == law_title:
+            return law
+    return None
+
+
+def _normalize_judgement(value: str) -> str:
+    v = str(value or "").strip().lower()
+    if v in {"rispettata", "compliant", "conforme", "yes", "true"}:
+        return "rispettata"
+    if v in {"non_rispettata", "non rispettata", "non-compliant", "non conforme", "no", "false"}:
+        return "non_rispettata"
+    return ""
+
+
+def _judge_law_with_semantic_llm(law: dict, evidence_chunks: list) -> tuple:
+    if not evidence_chunks:
+        fallback_actions = LAW_COMPLIANCE_RULES.get(law["title"], {}).get("actions", [])
+        return "non_rispettata", "Nessuna evidenza documentale rilevante trovata per la norma.", fallback_actions
+
+    evidence_text = "\n\n".join([
+        f"[Evidenza {i+1}]\n{chunk['text'][:1000]}"
+        for i, chunk in enumerate(evidence_chunks[:2])
+    ])
+
+    prompt = f"""
+Sei un auditor legale/compliance.
+Valuta se il documento RISULTA CONFORME o NON CONFORME alla norma indicata.
+
+Norma:
+{law['title']}
+
+Requisiti norma (riassunto):
+{law['text']}
+
+Evidenze dal documento:
+{evidence_text}
+
+Regole obbligatorie:
+- Basati solo sulle evidenze fornite.
+- Non usare supposizioni.
+- Se le evidenze sono incomplete, classifica NON_RISPETTATA.
+- Rispondi solo con JSON valido nel formato:
+{{
+  "verdetto": "RISPETTATA" | "NON_RISPETTATA",
+  "motivazione": "breve motivazione specifica",
+  "azioni": ["azione 1", "azione 2"]
+}}
+"""
+
+    try:
+        raw = local_llama_generate(
+            prompt,
+            max_new_tokens=140,
+            temperature=0.0,
+            do_sample=False,
+        )
+    except Exception:
+        fallback_actions = LAW_COMPLIANCE_RULES.get(law["title"], {}).get("actions", [])
+        return "", "", fallback_actions
+    parsed = _extract_json_from_text(raw) or {}
+
+    verdict = _normalize_judgement(parsed.get("verdetto", ""))
+    reason = str(parsed.get("motivazione", "")).strip()
+    actions = parsed.get("azioni", [])
+    if not isinstance(actions, list):
+        actions = []
+    actions = [str(a).strip() for a in actions if str(a).strip()]
+
+    if verdict not in {"rispettata", "non_rispettata"}:
+        fallback_actions = LAW_COMPLIANCE_RULES.get(law["title"], {}).get("actions", [])
+        return "", "", fallback_actions
+
+    if not reason:
+        reason = "Valutazione semantica effettuata sulle evidenze disponibili del documento."
+
+    return verdict, reason, actions
+
+
 def _select_candidate_laws(text: str, chunks: list) -> list:
-    candidates = set()
+    scored_candidates = {}
+
+    def _push_score(title: str, score: float):
+        current = scored_candidates.get(title, -1.0)
+        if score > current:
+            scored_candidates[title] = score
 
     for chunk in chunks:
         for law in retrieve_relevant_laws(chunk, k=4):
-            candidates.add(law["title"])
+            _push_score(law["title"], float(law.get("score", 0.0)))
 
     for doc_type in detect_document_type(text):
         for law_title in DOC_TYPE_TO_LAWS.get(doc_type, []):
-            candidates.add(law_title)
+            _push_score(law_title, 1.5)
 
-    if not candidates:
+    if not scored_candidates:
         for law in LAW_DATABASE:
-            candidates.add(law["title"])
+            _push_score(law["title"], 0.1)
 
-    return [title for title in candidates if title in {l["title"] for l in LAW_DATABASE}]
+    valid_titles = {l["title"] for l in LAW_DATABASE}
+    ranked = sorted(scored_candidates.items(), key=lambda x: x[1], reverse=True)
+    return [title for title, _ in ranked if title in valid_titles]
 
 
 def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
@@ -549,14 +644,31 @@ def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
 
     text_lower = text.lower()
     candidate_titles = _select_candidate_laws(text, chunks)
+    chunk_index, _ = _build_chunk_index(chunks)
 
     norme_rispettate = []
     norme_non_rispettate = []
     norme_borderline = []
     azioni_correttive = []
 
-    for law_title in candidate_titles:
-        status, motivo, suggested_actions = _evaluate_law_compliance(text_lower, law_title)
+    for idx, law_title in enumerate(candidate_titles):
+        law = _find_law_by_title(law_title)
+        if law is None:
+            continue
+
+        law_query = f"{law_title}. {law['text']}"
+        evidence_chunks = retrieve_relevant_chunks(law_query, chunks, chunk_index, top_k=4)
+
+        # Primo livello: semantico (LLM su evidenze rilevanti), limitato per stabilita runtime.
+        if idx < MAX_SEMANTIC_EVALUATIONS:
+            status, motivo, suggested_actions = _judge_law_with_semantic_llm(law, evidence_chunks)
+        else:
+            status, motivo, suggested_actions = "", "", []
+
+        # Fallback robusto: regole deterministiche (in caso output LLM non valido)
+        if status not in {"rispettata", "non_rispettata"}:
+            status, motivo, suggested_actions = _evaluate_law_compliance(text_lower, law_title)
+
         item = {"norma": law_title, "motivo": motivo}
 
         if status == "rispettata":
