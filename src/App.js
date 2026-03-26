@@ -295,6 +295,29 @@ function App() {
             {/* Dashboard row */}
             <div className="dashboard-row">
               {complianceScore !== null && <ComplianceScore score={complianceScore} />}
+
+              {/* Actions panel — right of score */}
+              {report.azioni_correttive?.length > 0 && (
+                <div className="actions-panel">
+                  <div className="actions-panel-header">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.3-1.3l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/>
+                      <path d="M15 7l2 2"/>
+                    </svg>
+                    <span>Azioni Correttive</span>
+                    <span className="actions-panel-count">{report.azioni_correttive.length}</span>
+                  </div>
+                  <ol className="actions-panel-list">
+                    {report.azioni_correttive.map((a, i) => (
+                      <li key={i} className="actions-panel-item">
+                        <span className="actions-panel-num">{i + 1}</span>
+                        <span>{a}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+              )}
+
               <div className="dashboard-stats">
                 <div className="stat-card stat-ok">
                   <div className="stat-num">{report.norme_rispettate?.length ?? 0}</div>
@@ -368,27 +391,6 @@ function App() {
                   : <p className="empty-col">Nessun caso borderline</p>}
               </div>
             </div>
-
-            {/* Corrective actions */}
-            {report.azioni_correttive?.length > 0 && (
-              <div className="actions-card">
-                <div className="actions-header">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.3-1.3l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/>
-                    <path d="M15 7l2 2"/>
-                  </svg>
-                  <h3>Azioni Correttive Consigliate</h3>
-                </div>
-                <ol className="action-list">
-                  {report.azioni_correttive.map((a, i) => (
-                    <li key={i} className="action-item">
-                      <span className="action-num">{i + 1}</span>
-                      <span>{a}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
-            )}
 
             <div className="report-footer">
               <button className="btn btn-outline" onClick={clearFiles}>
