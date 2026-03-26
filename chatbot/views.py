@@ -776,6 +776,7 @@ def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
     norme_non_rispettate = []
     norme_borderline = []
     azioni_correttive = []
+    non_conform_laws = []
 
     for idx, law_title in enumerate(candidate_titles):
         law = _find_law_by_title(law_title)
@@ -801,16 +802,37 @@ def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
             norme_rispettate.append(item)
         else:
             norme_non_rispettate.append(item)
+            non_conform_laws.append(law_title)
 
         azioni_correttive.extend(suggested_actions)
+
+    def _is_placeholder_action(value: str) -> bool:
+        s = value.strip().lower()
+        if not s:
+            return True
+        if re.match(r"^azione\s*\d+\b", s):
+            return True
+        if re.match(r"^azione\b", s) and len(s) <= 18:
+            return True
+        return False
 
     dedup_actions = []
     seen_actions = set()
     for action in azioni_correttive:
         normalized = action.lower().strip()
+        if _is_placeholder_action(action):
+            continue
         if normalized and normalized not in seen_actions:
             dedup_actions.append(action)
             seen_actions.add(normalized)
+
+    if not dedup_actions and non_conform_laws:
+        for law_title in non_conform_laws:
+            for action in LAW_COMPLIANCE_RULES.get(law_title, {}).get("actions", []):
+                normalized = action.lower().strip()
+                if normalized and normalized not in seen_actions:
+                    dedup_actions.append(action)
+                    seen_actions.add(normalized)
 
     if not dedup_actions:
         dedup_actions = [
