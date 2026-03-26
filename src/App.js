@@ -103,19 +103,60 @@ function AnalyzeTab() {
             <div className="meta-item"><strong>📄 Tipo documento</strong><span>{report.tipo_documento?.join(', ')}</span></div>
             <div className="meta-item"><strong>⚖️ Normative rilevate</strong><span>{report.normative_analizzate?.join(', ')}</span></div>
             <div className="meta-item"><strong>📊 KPI trovati</strong><span>{report.kpi_rilevati?.join(', ') || 'Nessuno'}</span></div>
-            <div className="meta-item"><strong>🔢 Sezioni analizzate</strong><span>{report.totale_sezioni}</span></div>
           </div>
 
-          {report.sezioni?.map((s, i) => (
-            <div key={i} className="section-card">
-              <h3>Sezione {s.sezione}</h3>
-              <p className="section-excerpt">"{s.testo_estratto}"</p>
-              <div className="law-tags">
-                {s.normative_correlate?.map((l, j) => <span key={j} className="law-tag">{l}</span>)}
-              </div>
-              <div className="analysis-text">{s.analisi}</div>
-            </div>
-          ))}
+          <div className="section-card">
+            <h3>✅ Norme rispettate</h3>
+            {report.norme_rispettate?.length ? (
+              report.norme_rispettate.map((n, i) => (
+                <div key={i} className="analysis-text">
+                  <strong>{n.norma}</strong>
+                  {n.motivo ? `: ${n.motivo}` : ''}
+                </div>
+              ))
+            ) : (
+              <div className="analysis-text">Nessuna norma pienamente rispettata rilevata.</div>
+            )}
+          </div>
+
+          <div className="section-card">
+            <h3>❌ Norme non rispettate</h3>
+            {report.norme_non_rispettate?.length ? (
+              report.norme_non_rispettate.map((n, i) => (
+                <div key={i} className="analysis-text">
+                  <strong>{n.norma}</strong>
+                  {n.motivo ? `: ${n.motivo}` : ''}
+                </div>
+              ))
+            ) : (
+              <div className="analysis-text">Nessuna non conformita critica rilevata.</div>
+            )}
+          </div>
+
+          <div className="section-card">
+            <h3>⚠️ Norme borderline</h3>
+            {report.norme_borderline?.length ? (
+              report.norme_borderline.map((n, i) => (
+                <div key={i} className="analysis-text">
+                  <strong>{n.norma}</strong>
+                  {n.motivo ? `: ${n.motivo}` : ''}
+                </div>
+              ))
+            ) : (
+              <div className="analysis-text">Nessun caso borderline rilevato.</div>
+            )}
+          </div>
+
+          <div className="section-card">
+            <h3>🔧 Azioni correttive</h3>
+            {report.azioni_correttive?.length ? (
+              report.azioni_correttive.map((azione, i) => (
+                <div key={i} className="analysis-text">{i + 1}. {azione}</div>
+              ))
+            ) : (
+              <div className="analysis-text">Nessuna azione suggerita.</div>
+            )}
+          </div>
         </div>
       )}
     </div>
