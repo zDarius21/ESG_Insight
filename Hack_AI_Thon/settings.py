@@ -17,7 +17,7 @@ from dotenv import load_dotenv
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+load_dotenv(Path(__file__).resolve().parent / '.env')
 
 
 # Quick-start development settings - unsuitable for production
@@ -136,7 +136,6 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Gemini API Key - ottienila su https://aistudio.google.com
-GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Local LLM (Llama) settings
 LOCAL_LLM_MODEL = os.getenv('LOCAL_LLM_MODEL', 'meta-llama/Llama-3.2-3B-Instruct')
