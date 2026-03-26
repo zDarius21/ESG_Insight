@@ -100,9 +100,7 @@ function AnalyzeTab() {
       {report && (
         <div className="report">
           <div className="report-meta">
-            <div className="meta-item"><strong>📄 Tipo documento</strong><span>{report.tipo_documento?.join(', ')}</span></div>
             <div className="meta-item"><strong>⚖️ Normative rilevate</strong><span>{report.normative_analizzate?.join(', ')}</span></div>
-            <div className="meta-item"><strong>📊 KPI trovati</strong><span>{report.kpi_rilevati?.join(', ') || 'Nessuno'}</span></div>
           </div>
 
           <div className="section-card">
