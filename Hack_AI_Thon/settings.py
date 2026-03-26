@@ -11,16 +11,20 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+load_dotenv(BASE_DIR / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-exwfz!kf%j*m7g3)1gpy7sz0rr2jw#b*is+*pyjkq(y_t7ifqi'
+SECRET_KEY = os.getenv('DJANGO')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -132,7 +136,7 @@ CORS_ALLOWED_ORIGINS = [
 ]
 
 # Gemini API Key - ottienila su https://aistudio.google.com
-GEMINI_API_KEY = 'AIzaSyDDilBVEQMM_iTJHyvzS8KiuymHxhmSApw'
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 
 # Upload PDF fino a 20MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 20 * 1024 * 1024
