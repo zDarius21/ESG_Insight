@@ -257,8 +257,7 @@ def extract_text_from_pdf(file) -> str:
 
 
 def _stable_pseudonym(value: str, label: str) -> str:
-    digest = hashlib.sha256(value.encode("utf-8", errors="ignore")).hexdigest()[:10]
-    return f"[{label}_{digest}]"
+    return f"[{label}]"
 
 
 def run_file_etl_anonymization(raw_text: str) -> str:
@@ -288,6 +287,44 @@ def run_file_etl_anonymization(raw_text: str) -> str:
             return _stable_pseudonym(match.group(0), label)
 
         text = re.sub(pattern, _replace, text, flags=re.IGNORECASE)
+
+    # Citta con sigla provincia, es: "Vimercate (MB)", "Roma (RM)"
+    city_with_province_pattern = r"\b([A-Z][A-Za-zÀ-ÿ'’\-]+(?:\s[A-Z][A-Za-zÀ-ÿ'’\-]+){0,2})\s*\(([A-Z]{2})\)(?=[\s,.;:]|$)"
+    text = re.sub(
+        city_with_province_pattern,
+        lambda m: _stable_pseudonym(m.group(0), "CITY"),
+        text,
+    )
+
+    person_blocklist = {
+        "Direttiva", "Regolamento", "Standard", "Standards", "Corporate", "Sustainability",
+        "Reporting", "Global", "Initiative", "Taxonomy", "Bilancio", "Scope", "ESRS",
+        "CSRD", "DNF", "ISO", "UE", "EU", "Output", "ETL", "Pagina", "Input",
+    }
+
+    city_standalone_pattern = r"\b(?:a|ad|in|da|di|nel|nella|presso)\s+([A-Z][a-zà-ÿ'’\-]{2,}(?:\s[A-Z][a-zà-ÿ'’\-]{2,}){0,2})\b"
+
+    def _replace_city_standalone(match):
+        city = match.group(1)
+        tokens = re.split(r"\s+", city)
+        if any(token in person_blocklist for token in tokens):
+            return match.group(0)
+        prefix = match.group(0)[:match.group(0).find(city)]
+        return f"{prefix}{_stable_pseudonym(city, 'CITY')}"
+
+    text = re.sub(city_standalone_pattern, _replace_city_standalone, text)
+
+    # Nomi persona (2-3 parole capitalizzate), con esclusione di termini normativi/compliance.
+    person_pattern = r"\b([A-Z][a-zà-ÿ'’\-]{2,}\s+[A-Z][a-zà-ÿ'’\-]{2,}(?:\s+[A-Z][a-zà-ÿ'’\-]{2,})?)\b"
+
+    def _replace_person(match):
+        candidate = match.group(1)
+        tokens = re.split(r"\s+", candidate)
+        if any(token in person_blocklist for token in tokens):
+            return candidate
+        return _stable_pseudonym(candidate, "PERSON")
+
+    text = re.sub(person_pattern, _replace_person, text)
 
     # Telefono con validazione: evita falsi positivi su valori numerici tecnici (es. 120.000 m3)
     phone_pattern = r"(?<!\d)(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?(?:\d[\s.-]?){7,13}(?!\d)"
