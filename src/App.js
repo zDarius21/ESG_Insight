@@ -294,65 +294,76 @@ function App() {
           <div className="report-container">
             {/* Dashboard row */}
             <div className="dashboard-row">
-              {complianceScore !== null && <ComplianceScore score={complianceScore} />}
 
-              {/* Actions panel — right of score */}
-              {report.azioni_correttive?.length > 0 && (
-                <div className="actions-panel">
-                  <div className="actions-panel-header">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.3-1.3l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/>
-                      <path d="M15 7l2 2"/>
-                    </svg>
-                    <span>Azioni Correttive</span>
-                    <span className="actions-panel-count">{report.azioni_correttive.length}</span>
+              {/* Left: two independent badges */}
+              <div className="dashboard-badges">
+                {complianceScore !== null && (
+                  <div className="badge-card badge-score">
+                    <ComplianceScore score={complianceScore} />
                   </div>
-                  <ol className="actions-panel-list">
-                    {report.azioni_correttive.map((a, i) => (
-                      <li key={i} className="actions-panel-item">
-                        <span className="actions-panel-num">{i + 1}</span>
-                        <span>{a}</span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
-              )}
+                )}
 
-              <div className="dashboard-stats">
-                <div className="stat-card stat-ok">
-                  <div className="stat-num">{report.norme_rispettate?.length ?? 0}</div>
-                  <div className="stat-label">Conformi</div>
+                {report.azioni_correttive?.length > 0 && (
+                  <div className="badge-card badge-actions">
+                    <div className="badge-actions-header">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M14.7 6.3a1 1 0 010 1.4l-8 8a1 1 0 01-.4.25l-3 1a1 1 0 01-1.3-1.3l1-3a1 1 0 01.25-.4l8-8a1 1 0 011.4 0z"/>
+                        <path d="M15 7l2 2"/>
+                      </svg>
+                      <span>Azioni Correttive</span>
+                      <span className="badge-actions-count">{report.azioni_correttive.length}</span>
+                    </div>
+                    <ol className="badge-actions-list">
+                      {report.azioni_correttive.map((a, i) => (
+                        <li key={i} className="badge-actions-item">
+                          <span className="badge-actions-num">{i + 1}</span>
+                          <span>{a}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+              </div>
+
+              {/* Right: stats + meta */}
+              <div className="dashboard-right">
+                <div className="dashboard-stats">
+                  <div className="stat-card stat-ok">
+                    <div className="stat-num">{report.norme_rispettate?.length ?? 0}</div>
+                    <div className="stat-label">Conformi</div>
+                  </div>
+                  <div className="stat-card stat-fail">
+                    <div className="stat-num">{report.norme_non_rispettate?.length ?? 0}</div>
+                    <div className="stat-label">Non Conformi</div>
+                  </div>
+                  <div className="stat-card stat-warn">
+                    <div className="stat-num">{report.norme_borderline?.length ?? 0}</div>
+                    <div className="stat-label">Borderline</div>
+                  </div>
+                  <div className="stat-card stat-info">
+                    <div className="stat-num">{report.azioni_correttive?.length ?? 0}</div>
+                    <div className="stat-label">Azioni</div>
+                  </div>
                 </div>
-                <div className="stat-card stat-fail">
-                  <div className="stat-num">{report.norme_non_rispettate?.length ?? 0}</div>
-                  <div className="stat-label">Non Conformi</div>
-                </div>
-                <div className="stat-card stat-warn">
-                  <div className="stat-num">{report.norme_borderline?.length ?? 0}</div>
-                  <div className="stat-label">Borderline</div>
-                </div>
-                <div className="stat-card stat-info">
-                  <div className="stat-num">{report.azioni_correttive?.length ?? 0}</div>
-                  <div className="stat-label">Azioni</div>
+                <div className="dashboard-meta">
+                  <div className="meta-row">
+                    <span>File analizzati</span>
+                    <strong>{report.totale_file ?? files.length}</strong>
+                  </div>
+                  <div className="meta-row">
+                    <span>Normative verificate</span>
+                    <strong>{report.normative_analizzate?.length ?? '—'}</strong>
+                  </div>
+                  {report.normative_analizzate?.length ? (
+                    <div className="norm-tags">
+                      {report.normative_analizzate.map((n, i) => (
+                        <span key={i} className="norm-tag">{n}</span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
               </div>
-              <div className="dashboard-meta">
-                <div className="meta-row">
-                  <span>File analizzati</span>
-                  <strong>{report.totale_file ?? files.length}</strong>
-                </div>
-                <div className="meta-row">
-                  <span>Normative verificate</span>
-                  <strong>{report.normative_analizzate?.length ?? '—'}</strong>
-                </div>
-                {report.normative_analizzate?.length ? (
-                  <div className="norm-tags">
-                    {report.normative_analizzate.map((n, i) => (
-                      <span key={i} className="norm-tag">{n}</span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
+
             </div>
 
             {/* Three-column norms grid */}
