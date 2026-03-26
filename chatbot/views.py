@@ -1,6 +1,7 @@
 import json
 import re
 import hashlib
+from textwrap import wrap
 from datetime import datetime
 import numpy as np
 import faiss
@@ -10,7 +11,7 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
 
 from django.conf import settings
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from sentence_transformers import SentenceTransformer
@@ -272,13 +273,14 @@ def run_file_etl_anonymization(raw_text: str) -> str:
 
     patterns = [
         (r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", "EMAIL"),
-        (r"\b(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?\d{3,4}[\s.-]?\d{3,4}\b", "PHONE"),
         (r"\bIT\d{2}[A-Z0-9]{11,30}\b", "IBAN"),
         (r"\b[A-Z]{6}\d{2}[A-Z]\d{2}[A-Z]\d{3}[A-Z]\b", "FISCAL_CODE"),
         (r"\b(?:P\.?\s*IVA|Partita\s*IVA)\s*[:\-]?\s*\d{11}\b", "VAT"),
         (r"\b\d{11}\b", "ID_NUMBER"),
         (r"\b(?:via|viale|piazza|corso|largo)\s+[A-Za-zÀ-ÿ'\-\s]{3,80},?\s*\d{1,5}\b", "ADDRESS"),
         (r"\bhttps?://[^\s]+\b", "URL"),
+        # Ragioni sociali aziendali tipiche italiane
+        (r"\b[A-Za-zÀ-ÿ0-9&'\-\s]{3,140}\s+(?:S\.p\.A\.|S\.r\.l\.|S\.a\.s\.|S\.n\.c\.|SRL|SPA)", "COMPANY"),
     ]
 
     for pattern, label in patterns:
@@ -287,9 +289,58 @@ def run_file_etl_anonymization(raw_text: str) -> str:
 
         text = re.sub(pattern, _replace, text, flags=re.IGNORECASE)
 
+    # Telefono con validazione: evita falsi positivi su valori numerici tecnici (es. 120.000 m3)
+    phone_pattern = r"(?<!\d)(?:\+?\d{1,3}[\s.-]?)?(?:\(?\d{2,4}\)?[\s.-]?)?(?:\d[\s.-]?){7,13}(?!\d)"
+
+    def _replace_phone(match):
+        value = match.group(0)
+        digits = re.sub(r"\D", "", value)
+        # Un telefono reale ha normalmente almeno 8 cifre
+        if len(digits) < 8:
+            return value
+
+        # Evita masking di numeri seguiti da unita di misura comuni
+        tail = text[match.end():match.end() + 6].lower()
+        if re.match(r"\s*(m3|kg|tco2|co2|kwh|mwh)\b", tail):
+            return value
+
+        return _stable_pseudonym(value, "PHONE")
+
+    text = re.sub(phone_pattern, _replace_phone, text, flags=re.IGNORECASE)
+
     text = re.sub(r"[ \t]+", " ", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
     return text.strip()
+
+
+def _render_anonymized_pdf_bytes(text: str, title: str = "Output ETL - Dati Anonimizzati") -> bytes:
+    doc = fitz.open()
+
+    lines = [title, ""]
+    for row in text.split("\n"):
+        clean = row.strip()
+        if not clean:
+            lines.append("")
+            continue
+        lines.extend(wrap(clean, width=95))
+
+    page_width, page_height = 595, 842  # A4
+    margin_x = 44
+    top_y = 54
+    bottom_y = 800
+    line_height = 13
+    lines_per_page = max(1, int((bottom_y - top_y) / line_height))
+
+    for start in range(0, len(lines), lines_per_page):
+        page = doc.new_page(width=page_width, height=page_height)
+        y = top_y
+        for line in lines[start:start + lines_per_page]:
+            page.insert_text((margin_x, y), line, fontsize=10, fontname="helv")
+            y += line_height
+
+    payload = doc.tobytes(garbage=4, deflate=True)
+    doc.close()
+    return payload
 
 
 # ── Chunking ──────────────────────────────────────────────────────────────────
@@ -1062,6 +1113,42 @@ def ask_document(request):
 
         answer = ask_esg(text=text, question=question, top_k=4)
         return JsonResponse(answer)
+
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def anonymize_pdf(request):
+    try:
+        uploaded = request.FILES.get('file')
+        if not uploaded:
+            return JsonResponse({'error': 'Carica un file PDF nel campo file.'}, status=400)
+
+        if not uploaded.name.lower().endswith('.pdf'):
+            return JsonResponse({'error': 'Formato non supportato. Carica un file .pdf'}, status=400)
+
+        extracted_text = extract_text_from_pdf(uploaded)
+        try:
+            uploaded.close()
+        except Exception:
+            pass
+
+        anonymized_text = run_file_etl_anonymization(extracted_text)
+        extracted_text = None
+
+        if not anonymized_text.strip():
+            return JsonResponse({'error': 'Impossibile estrarre testo dal PDF fornito.'}, status=400)
+
+        base_name = re.sub(r'\.pdf$', '', uploaded.name, flags=re.IGNORECASE)
+        output_name = f"{base_name}_anonymized.pdf"
+        pdf_bytes = _render_anonymized_pdf_bytes(anonymized_text)
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{output_name}"'
+        response['X-ETL-Anonymized'] = 'true'
+        return response
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
