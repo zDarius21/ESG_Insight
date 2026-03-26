@@ -4,6 +4,7 @@ import './App.css';
 function App() {
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
 
@@ -55,6 +56,49 @@ function App() {
     } finally { setLoading(false); }
   };
 
+  const downloadAnonymizedPdfs = async () => {
+    if (!files.length) return;
+
+    setDownloading(true);
+    setError('');
+    try {
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const res = await fetch('/api/anonymize-pdf/', { method: 'POST', body: formData });
+        if (!res.ok) {
+          let err = 'Errore durante l\'anonimizzazione del PDF.';
+          try {
+            const data = await res.json();
+            err = data.error || err;
+          } catch {
+            // ignore parse errors
+          }
+          throw new Error(err);
+        }
+
+        const blob = await res.blob();
+        const contentDisposition = res.headers.get('Content-Disposition') || '';
+        const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/i);
+        const fileName = filenameMatch ? filenameMatch[1] : `${file.name.replace(/\.pdf$/i, '')}_anonymized.pdf`;
+
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+      }
+    } catch (e) {
+      setError(e.message || 'Errore durante il download dei PDF anonimizzati.');
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="chat-container">
       <header className="chat-header">
@@ -74,10 +118,13 @@ function App() {
             ? `📄 ${files.length} file selezionati`
             : '📂 Carica uno o più file PDF'}
         </label>
-        <button onClick={analyze} disabled={!files.length || loading}>
+        <button onClick={analyze} disabled={!files.length || loading || downloading}>
           {loading ? '⏳ Analisi aggregata in corso...' : '🔍 Analizza tutti i file'}
         </button>
-        <button onClick={clearFiles} disabled={!files.length || loading}>
+        <button onClick={downloadAnonymizedPdfs} disabled={!files.length || loading || downloading}>
+          {downloading ? '⏳ Creo PDF anonimizzati...' : '📥 Scarica PDF anonimizzati'}
+        </button>
+        <button onClick={clearFiles} disabled={!files.length || loading || downloading}>
           🧹 Svuota
         </button>
       </div>
