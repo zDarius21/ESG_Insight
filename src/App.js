@@ -1,79 +1,51 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import './App.css';
 
-// ── Tab: Chatbot ───────────────────────────────────────────────────────────────
-function ChatTab() {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Ciao! Sono il tuo assistente ESG. Come posso aiutarti?' }
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const bottomRef = useRef(null);
-
-  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
-
-  const sendMessage = async () => {
-    const text = input.trim();
-    if (!text || loading) return;
-    const userMessage = { role: 'user', content: text };
-    const updated = [...messages, userMessage];
-    setMessages(updated);
-    setInput('');
-    setLoading(true);
-    try {
-      const res = await fetch('/api/chat/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: updated }),
-      });
-      const data = await res.json();
-      setMessages([...updated, { role: 'assistant', content: data.reply || 'Errore: ' + data.error }]);
-    } catch {
-      setMessages([...updated, { role: 'assistant', content: 'Errore di connessione.' }]);
-    } finally { setLoading(false); }
-  };
-
-  return (
-    <div className="tab-content">
-      <div className="chat-messages">
-        {messages.map((msg, i) => (
-          <div key={i} className={`message ${msg.role}`}>
-            <span className="bubble">{msg.content}</span>
-          </div>
-        ))}
-        {loading && <div className="message assistant"><span className="bubble typing">...</span></div>}
-        <div ref={bottomRef} />
-      </div>
-      <div className="chat-input-area">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-          placeholder="Scrivi un messaggio... (Invio per inviare)"
-          rows={2}
-          disabled={loading}
-        />
-        <button onClick={sendMessage} disabled={loading || !input.trim()}>Invia</button>
-      </div>
-    </div>
-  );
-}
-
-// ── Tab: Analisi Documento ─────────────────────────────────────────────────────
-function AnalyzeTab() {
-  const [file, setFile] = useState(null);
+function App() {
+  const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState('');
 
+  const onFilesSelected = (event) => {
+    const selected = Array.from(event.target.files || []);
+    if (!selected.length) return;
+
+    setFiles((prev) => {
+      const merged = [...prev];
+      const seen = new Set(prev.map((f) => `${f.name}-${f.size}-${f.lastModified}`));
+
+      selected.forEach((f) => {
+        const key = `${f.name}-${f.size}-${f.lastModified}`;
+        if (!seen.has(key)) {
+          merged.push(f);
+          seen.add(key);
+        }
+      });
+
+      return merged;
+    });
+
+    // Permette di riselezionare lo stesso file in un secondo momento.
+    event.target.value = '';
+    setReport(null);
+    setError('');
+  };
+
+  const clearFiles = () => {
+    setFiles([]);
+    setReport(null);
+    setError('');
+  };
+
   const analyze = async () => {
-    if (!file) return;
+    if (!files.length) return;
     setLoading(true);
     setReport(null);
     setError('');
     try {
       const formData = new FormData();
-      formData.append('file', file);
+      files.forEach((file) => formData.append('files', file));
       const res = await fetch('/api/analyze/', { method: 'POST', body: formData });
       const data = await res.json();
       if (data.error) setError(data.error);
@@ -84,22 +56,47 @@ function AnalyzeTab() {
   };
 
   return (
-    <div className="tab-content analyze-tab">
+    <div className="chat-container">
+      <header className="chat-header">
+        <h1>Hack AI Thon - ESG Compliance Analyzer</h1>
+      </header>
+
+      <div className="tab-content analyze-tab">
       <div className="upload-area">
         <label className="upload-label">
-          <input type="file" accept=".pdf,.txt" onChange={e => setFile(e.target.files[0])} />
-          {file ? `📄 ${file.name}` : '📂 Carica documento PDF o TXT'}
+          <input
+            type="file"
+            accept=".pdf"
+            multiple
+            onChange={onFilesSelected}
+          />
+          {files.length
+            ? `📄 ${files.length} file selezionati`
+            : '📂 Carica uno o più file PDF'}
         </label>
-        <button onClick={analyze} disabled={!file || loading}>
-          {loading ? '⏳ Analisi in corso...' : '🔍 Analizza Conformità'}
+        <button onClick={analyze} disabled={!files.length || loading}>
+          {loading ? '⏳ Analisi aggregata in corso...' : '🔍 Analizza tutti i file'}
+        </button>
+        <button onClick={clearFiles} disabled={!files.length || loading}>
+          🧹 Svuota
         </button>
       </div>
+
+      {!!files.length && !report && (
+        <div className="section-card">
+          <h3>📁 File caricati</h3>
+          {files.map((f, idx) => (
+            <div key={`${f.name}-${idx}`} className="analysis-text">{idx + 1}. {f.name}</div>
+          ))}
+        </div>
+      )}
 
       {error && <div className="error-box">❌ {error}</div>}
 
       {report && (
         <div className="report">
           <div className="report-meta">
+            <div className="meta-item"><strong>📦 Totale file analizzati</strong><span>{report.totale_file ?? files.length}</span></div>
             <div className="meta-item"><strong>⚖️ Normative rilevate</strong><span>{report.normative_analizzate?.join(', ')}</span></div>
           </div>
 
@@ -158,24 +155,6 @@ function AnalyzeTab() {
         </div>
       )}
     </div>
-  );
-}
-
-// ── App principale ─────────────────────────────────────────────────────────────
-function App() {
-  const [tab, setTab] = useState('chat');
-
-  return (
-    <div className="chat-container">
-      <header className="chat-header">
-        <h1>Hack AI Thon — ESG Compliance Analyzer</h1>
-        <div className="tabs">
-          <button className={tab === 'chat' ? 'active' : ''} onClick={() => setTab('chat')}>💬 Chat</button>
-          <button className={tab === 'analyze' ? 'active' : ''} onClick={() => setTab('analyze')}>📋 Analisi Documento</button>
-        </div>
-      </header>
-
-      {tab === 'chat' ? <ChatTab /> : <AnalyzeTab />}
     </div>
   );
 }
