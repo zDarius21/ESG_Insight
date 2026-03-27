@@ -996,6 +996,22 @@ def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
     azioni_correttive = []
     non_conform_laws = []
 
+    def _has_uncertain_positive_reason(reason: str) -> bool:
+        r = (reason or "").strip().lower()
+        if not r:
+            return False
+        uncertain_markers = [
+            "non e stato possibile",
+            "non è stato possibile",
+            "impossibile",
+            "evidenze insufficienti",
+            "nessuna evidenza",
+            "non sono presenti evidenze",
+            "non trovato",
+            "non trovate",
+        ]
+        return any(marker in r for marker in uncertain_markers)
+
     for idx, law_title in enumerate(candidate_titles):
         law = _find_law_by_title(law_title)
         if law is None:
@@ -1013,6 +1029,13 @@ def summarize_compliance(text: str, max_chunks: int = 8) -> dict:
         # Fallback robusto: regole deterministiche (in caso output LLM non valido)
         if status not in {"rispettata", "non_rispettata"}:
             status, motivo, suggested_actions = _evaluate_law_compliance(text_lower, law_title)
+
+        # Evita falsi positivi: una norma non puo risultare rispettata con motivazioni di incertezza.
+        if status == "rispettata" and _has_uncertain_positive_reason(motivo):
+            status = "non_rispettata"
+            motivo = "Evidenze insufficienti per classificare la norma come conforme."
+            if not suggested_actions:
+                suggested_actions = LAW_COMPLIANCE_RULES.get(law_title, {}).get("actions", [])
 
         item = {"norma": law_title, "motivo": motivo}
 
