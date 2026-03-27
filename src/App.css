@@ -1,15 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap');
 
 :root {
-  --bg:                   #060b16;
-  --surface:              #0d1424;
-  --surface-2:            #131d30;
-  --surface-3:            #1a253d;
-  --border:               rgba(148,163,184,0.1);
-  --border-hover:         rgba(148,163,184,0.22);
-  --text:                 #eef2ff;
-  --text-2:               #8896b3;
-  --text-3:               #455070;
+  --bg:                   #ffffff;
+  --surface:              #ffffff;
+  --surface-2:            #f8fafc;
+  --surface-3:            #e2e8f0;
+  --border:               rgba(15,23,42,0.12);
+  --border-hover:         rgba(15,23,42,0.22);
+  --text:                 #0f172a;
+  --text-2:               #475569;
+  --text-3:               #64748b;
   --primary:              #818cf8;
   --primary-dark:         #5b6bf5;
   --primary-light:        rgba(91,107,245,0.14);
@@ -25,9 +25,9 @@
   --warn-border:          rgba(251,191,36,0.22);
   --info:                 #38bdf8;
   --info-bg:              rgba(56,189,248,0.1);
-  --shadow-sm:            0 1px 4px rgba(0,0,0,0.5);
-  --shadow:               0 4px 24px rgba(0,0,0,0.55);
-  --shadow-lg:            0 12px 48px rgba(0,0,0,0.7);
+  --shadow-sm:            0 1px 4px rgba(15,23,42,0.08);
+  --shadow:               0 4px 24px rgba(15,23,42,0.12);
+  --shadow-lg:            0 12px 48px rgba(15,23,42,0.18);
   --radius:               14px;
   --radius-sm:            10px;
 }
@@ -49,7 +49,7 @@ body {
 
 /* ─── Top Navigation ──────────────────────────────────── */
 .topnav {
-  background: rgba(6,11,22,0.88);
+  background: rgba(255,255,255,0.94);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-bottom: 1px solid var(--border);
@@ -126,15 +126,7 @@ body {
 .hero { text-align: center; padding: 12px 0 8px; position: relative; overflow: hidden; }
 
 .hero::before {
-  content: '';
-  position: absolute;
-  top: -80px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 800px;
-  height: 320px;
-  background: radial-gradient(ellipse, rgba(91,107,245,0.18) 0%, transparent 65%);
-  pointer-events: none;
+  content: none;
 }
 
 .hero-tag {
@@ -158,10 +150,7 @@ body {
   line-height: 1.13;
   letter-spacing: -0.03em;
   margin-bottom: 18px;
-  background: linear-gradient(135deg, #c7d2fe 0%, #818cf8 50%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text);
 }
 
 .hero-desc {
@@ -653,8 +642,8 @@ body {
 /* Actions badge */
 .badge-actions {
   width: 228px;
-  border-color: #bfdbfe;
-  background: var(--primary-light);
+  border-color: #c7d2fe;
+  background: #f5f7ff;
 }
 
 .badge-actions-header {
@@ -662,11 +651,11 @@ body {
   align-items: center;
   gap: 7px;
   padding: 10px 14px;
-  background: rgba(91,107,245,0.14);
-  border-bottom: 1px solid rgba(129,140,248,0.15);
+  background: #e9edff;
+  border-bottom: 1px solid #cfd8ff;
   font-size: 0.75rem;
   font-weight: 700;
-  color: var(--primary);
+  color: #334155;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
@@ -699,10 +688,14 @@ body {
   border-radius: 8px;
   font-size: 0.79rem;
   line-height: 1.5;
-  color: #a5b4fc;
-  transition: background 0.12s;
+  color: #1e293b;
+  font-weight: 500;
+  transition: background 0.12s, color 0.12s;
 }
-.badge-actions-item:hover { background: rgba(91,107,245,0.1); }
+.badge-actions-item:hover {
+  background: #e9edff;
+  color: #0f172a;
+}
 
 .badge-actions-num {
   flex-shrink: 0;
