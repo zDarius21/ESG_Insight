@@ -380,6 +380,224 @@ def _render_anonymized_pdf_bytes(text: str, title: str = "Output ETL - Dati Anon
     return payload
 
 
+def _hex_to_rgb(hex_color: str) -> tuple:
+    color = hex_color.strip().lstrip("#")
+    if len(color) != 6:
+        return 0.0, 0.0, 0.0
+    return tuple(int(color[i:i + 2], 16) / 255.0 for i in (0, 2, 4))
+
+
+def _safe_item_list(values):
+    if not isinstance(values, list):
+        return []
+    return values
+
+
+def _safe_text(value, fallback="-"):
+    if value is None:
+        return fallback
+    text = str(value).strip()
+    return text if text else fallback
+
+
+def _norm_name(item):
+    if isinstance(item, dict):
+        return _safe_text(item.get("norma"), "Norma")
+    return _safe_text(item, "Norma")
+
+
+def _norm_reason(item):
+    if isinstance(item, dict):
+        return _safe_text(item.get("motivo"), "Nessuna motivazione disponibile")
+    return "Nessuna motivazione disponibile"
+
+
+def _render_analysis_report_pdf_bytes(report: dict, title: str = "Report Analisi ESG") -> bytes:
+    doc = fitz.open()
+
+    page_width, page_height = 595, 842  # A4
+    margin_x = 42
+    margin_bottom = 42
+
+    c_navy = _hex_to_rgb("0B1F3A")
+    c_blue = _hex_to_rgb("1E6FD9")
+    c_bg = _hex_to_rgb("F4F8FF")
+    c_text = _hex_to_rgb("142033")
+    c_ok = _hex_to_rgb("0A8F5B")
+    c_fail = _hex_to_rgb("D63D3D")
+    c_warn = _hex_to_rgb("D48806")
+    c_card = _hex_to_rgb("FFFFFF")
+    c_border = _hex_to_rgb("DAE6F7")
+
+    norme_rispettate = _safe_item_list(report.get("norme_rispettate", []))
+    norme_non_rispettate = _safe_item_list(report.get("norme_non_rispettate", []))
+    norme_borderline = _safe_item_list(report.get("norme_borderline", []))
+    azioni = _safe_item_list(report.get("azioni_correttive", []))
+    files_analizzati = _safe_item_list(report.get("files_analizzati", []))
+
+    normative = _safe_item_list(report.get("normative_analizzate", []))
+    metadata = report.get("metadata", {}) if isinstance(report.get("metadata", {}), dict) else {}
+    doc_types = _safe_item_list(report.get("tipo_documento", metadata.get("tipo_documento", [])))
+
+    total = len(norme_rispettate) + len(norme_non_rispettate) + len(norme_borderline)
+    score = round((len(norme_rispettate) / total) * 100) if total > 0 else 0
+    date_label = _safe_text(metadata.get("data_analisi", datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+
+    page = doc.new_page(width=page_width, height=page_height)
+
+    # Hero header
+    page.draw_rect(fitz.Rect(0, 0, page_width, 170), color=c_navy, fill=c_navy)
+    page.draw_rect(fitz.Rect(0, 170, page_width, 220), color=c_blue, fill=c_blue)
+    page.draw_circle((page_width - 70, 85), 52, color=c_blue, fill=c_blue)
+    page.draw_circle((page_width - 42, 142), 24, color=c_blue, fill=c_blue)
+
+    page.insert_text((margin_x, 60), "ESG Compliance Report", fontsize=22, fontname="hebo", color=(1, 1, 1))
+    page.insert_text((margin_x, 88), _safe_text(title, "Report Analisi ESG"), fontsize=12, fontname="helv", color=(0.88, 0.93, 1.0))
+    page.insert_text((margin_x, 112), f"Data analisi: {date_label}", fontsize=10, fontname="helv", color=(0.85, 0.9, 0.98))
+    page.insert_text((margin_x, 134), f"File analizzati: {len(files_analizzati)}", fontsize=10, fontname="helv", color=(0.85, 0.9, 0.98))
+
+    y = 195
+
+    def draw_metric_card(x, y0, w, h, label, value, accent):
+        page.draw_rect(fitz.Rect(x, y0, x + w, y0 + h), color=c_border, fill=c_card, width=1)
+        page.draw_rect(fitz.Rect(x, y0, x + 6, y0 + h), color=accent, fill=accent)
+        page.insert_text((x + 16, y0 + 24), _safe_text(label), fontsize=9, fontname="helv", color=(0.35, 0.43, 0.55))
+        page.insert_text((x + 16, y0 + 52), _safe_text(value), fontsize=18, fontname="hebo", color=c_text)
+
+    card_gap = 10
+    card_w = (page_width - (margin_x * 2) - (card_gap * 3)) / 4
+    draw_metric_card(margin_x + 0 * (card_w + card_gap), y, card_w, 68, "Score conformita", f"{score}%", c_blue)
+    draw_metric_card(margin_x + 1 * (card_w + card_gap), y, card_w, 68, "Conformi", str(len(norme_rispettate)), c_ok)
+    draw_metric_card(margin_x + 2 * (card_w + card_gap), y, card_w, 68, "Non conformi", str(len(norme_non_rispettate)), c_fail)
+    draw_metric_card(margin_x + 3 * (card_w + card_gap), y, card_w, 68, "Borderline", str(len(norme_borderline)), c_warn)
+
+    y += 86
+    page.draw_rect(fitz.Rect(margin_x, y, page_width - margin_x, y + 32), color=c_border, fill=c_bg, width=1)
+    page.insert_text((margin_x + 12, y + 23), "Panoramica analisi", fontsize=12, fontname="hebo", color=c_text)
+    y += 42
+
+    row_1 = f"Normative verificate: {len(normative)}"
+    row_2 = f"Tipologia documento: {', '.join([_safe_text(x) for x in doc_types[:4]]) or '-'}"
+
+    for row in [row_1, row_2]:
+        page.insert_textbox(
+            fitz.Rect(margin_x + 12, y, page_width - margin_x - 12, y + 24),
+            row,
+            fontsize=10,
+            fontname="helv",
+            color=c_text,
+            align=fitz.TEXT_ALIGN_LEFT,
+        )
+        y += 20
+
+    y += 6
+
+    def new_page_with_title(section_title):
+        p = doc.new_page(width=page_width, height=page_height)
+        p.draw_rect(fitz.Rect(0, 0, page_width, 62), color=c_navy, fill=c_navy)
+        p.insert_text((margin_x, 40), section_title, fontsize=15, fontname="hebo", color=(1, 1, 1))
+        return p, 84
+
+    def ensure_space(current_page, current_y, min_space, section_title):
+        if current_y + min_space <= page_height - margin_bottom:
+            return current_page, current_y
+        return new_page_with_title(section_title)
+
+    def draw_section_header(current_page, current_y, text, color):
+        current_page.draw_rect(
+            fitz.Rect(margin_x, current_y, page_width - margin_x, current_y + 30),
+            color=color,
+            fill=color,
+        )
+        current_page.insert_text((margin_x + 10, current_y + 20), text, fontsize=11, fontname="hebo", color=(1, 1, 1))
+        return current_y + 38
+
+    def draw_norm_blocks(current_page, current_y, items, section_label, accent_color):
+        current_page, current_y = ensure_space(current_page, current_y, 60, "Dettaglio Conformita")
+        current_y = draw_section_header(current_page, current_y, section_label, accent_color)
+        if not items:
+            current_page.insert_text((margin_x + 4, current_y + 12), "Nessun elemento disponibile", fontsize=10, fontname="helv", color=c_text)
+            return current_page, current_y + 30
+
+        for item in items:
+            current_page, current_y = ensure_space(current_page, current_y, 82, "Dettaglio Conformita")
+            block_top = current_y
+            block_h = 74
+            current_page.draw_rect(
+                fitz.Rect(margin_x, block_top, page_width - margin_x, block_top + block_h),
+                color=c_border,
+                fill=c_card,
+                width=1,
+            )
+            current_page.draw_rect(
+                fitz.Rect(margin_x, block_top, margin_x + 5, block_top + block_h),
+                color=accent_color,
+                fill=accent_color,
+                width=0,
+            )
+
+            norm_title = _norm_name(item)
+            reason = _norm_reason(item)
+            current_page.insert_textbox(
+                fitz.Rect(margin_x + 12, block_top + 10, page_width - margin_x - 12, block_top + 35),
+                norm_title,
+                fontsize=10,
+                fontname="hebo",
+                color=c_text,
+                align=fitz.TEXT_ALIGN_LEFT,
+            )
+            current_page.insert_textbox(
+                fitz.Rect(margin_x + 12, block_top + 35, page_width - margin_x - 16, block_top + block_h - 10),
+                reason,
+                fontsize=9,
+                fontname="helv",
+                color=(0.27, 0.34, 0.45),
+                align=fitz.TEXT_ALIGN_LEFT,
+            )
+            current_y += block_h + 6
+        return current_page, current_y
+
+    page, y = ensure_space(page, y, 120, "Dettaglio Conformita")
+    page, y = draw_norm_blocks(page, y, norme_rispettate, "Norme Conformi", c_ok)
+    page, y = draw_norm_blocks(page, y, norme_non_rispettate, "Norme Non Conformi", c_fail)
+    page, y = draw_norm_blocks(page, y, norme_borderline, "Norme Borderline", c_warn)
+
+    page, y = ensure_space(page, y, 160, "Azioni Correttive e Allegati")
+    y = draw_section_header(page, y, "Azioni Correttive Prioritarie", c_blue)
+
+    if azioni:
+        for idx, action in enumerate(azioni, start=1):
+            page, y = ensure_space(page, y, 30, "Azioni Correttive e Allegati")
+            page.draw_circle((margin_x + 10, y + 9), 7, color=c_blue, fill=c_blue)
+            page.insert_text((margin_x + 6.5, y + 12), str(idx), fontsize=8, fontname="hebo", color=(1, 1, 1))
+            page.insert_textbox(
+                fitz.Rect(margin_x + 24, y, page_width - margin_x - 10, y + 24),
+                _safe_text(action),
+                fontsize=10,
+                fontname="helv",
+                color=c_text,
+                align=fitz.TEXT_ALIGN_LEFT,
+            )
+            y += 24
+    else:
+        page.insert_text((margin_x + 4, y + 12), "Nessuna azione correttiva suggerita", fontsize=10, fontname="helv", color=c_text)
+        y += 24
+
+    y += 12
+    y = draw_section_header(page, y, "File Analizzati", c_navy)
+    if files_analizzati:
+        for name in files_analizzati:
+            page, y = ensure_space(page, y, 24, "Azioni Correttive e Allegati")
+            page.insert_text((margin_x + 4, y + 14), f"- {_safe_text(name)}", fontsize=10, fontname="helv", color=c_text)
+            y += 20
+    else:
+        page.insert_text((margin_x + 4, y + 12), "Nessun file disponibile in metadata", fontsize=10, fontname="helv", color=c_text)
+
+    payload = doc.tobytes(garbage=4, deflate=True)
+    doc.close()
+    return payload
+
+
 # ── Chunking ──────────────────────────────────────────────────────────────────
 def chunk_text(text: str, chunk_size: int = 400, overlap: int = 40) -> list:
     article_pattern = re.compile(r'(Articolo\s+\d+[a-z]?\s*[-–])', re.IGNORECASE)
@@ -1001,7 +1219,6 @@ def ask_esg(text: str, question: str, top_k: int = 4) -> dict:
 
 def generate_compliance_report(text: str, max_sections: int = 5) -> dict:
     doc_types = detect_document_type(text)
-    kpis = extract_kpis(text)
     chunks = chunk_text(text)[:max_sections]
 
     section_results = []
@@ -1024,7 +1241,6 @@ def generate_compliance_report(text: str, max_sections: int = 5) -> dict:
         "metadata": {
             "data_analisi": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "tipo_documento": doc_types,
-            "kpi_rilevati": kpis,
             "normative_analizzate": list(set(all_laws_cited)),
             "sezioni_analizzate": len(section_results),
         },
@@ -1110,7 +1326,6 @@ def analyze_document(request):
 
         summary = summarize_compliance(text=text)
         doc_types = detect_document_type(text)
-        kpis = extract_kpis(text)
 
         normative_analizzate = []
         for item in summary["norme_rispettate"] + summary["norme_non_rispettate"] + summary["norme_borderline"]:
@@ -1122,14 +1337,12 @@ def analyze_document(request):
         # Manteniamo i campi legacy per non rompere il frontend esistente.
         response_payload = {
             "tipo_documento": doc_types,
-            "kpi_rilevati": kpis,
             "normative_analizzate": unique_normative,
             "totale_sezioni": 0,
             "sezioni": [],
             "metadata": {
                 "data_analisi": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "tipo_documento": doc_types,
-                "kpi_rilevati": kpis,
                 "normative_analizzate": unique_normative,
                 "sezioni_analizzate": 0,
             },
@@ -1209,6 +1422,96 @@ def anonymize_pdf(request):
         response['X-ETL-Anonymized'] = 'true'
         return response
 
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def anonymize_preview(request):
+    try:
+        uploaded_files = request.FILES.getlist('files')
+        if not uploaded_files and request.FILES.get('file'):
+            uploaded_files = [request.FILES.get('file')]
+
+        if not uploaded_files:
+            return JsonResponse({'error': 'Carica almeno un file PDF per la preview.'}, status=400)
+
+        previews = []
+        placeholder_regex = re.compile(r"\[(EMAIL|IBAN|FISCAL_CODE|VAT|ID_NUMBER|ADDRESS|URL|COMPANY|CITY|PERSON|PHONE)\]")
+
+        for uploaded in uploaded_files:
+            file_name = uploaded.name
+            if not file_name.lower().endswith('.pdf'):
+                continue
+
+            extracted_text = extract_text_from_pdf(uploaded)
+            try:
+                uploaded.close()
+            except Exception:
+                pass
+
+            anonymized_text = run_file_etl_anonymization(extracted_text)
+            if not anonymized_text.strip():
+                continue
+
+            placeholder_counts = {}
+            for match in placeholder_regex.findall(anonymized_text):
+                placeholder_counts[match] = placeholder_counts.get(match, 0) + 1
+
+            preview_lines = [ln.strip() for ln in anonymized_text.splitlines() if ln.strip()]
+            preview_text = "\n".join(preview_lines[:26])[:1800]
+
+            previews.append({
+                'file_name': file_name,
+                'original_characters': len(extracted_text or ''),
+                'anonymized_characters': len(anonymized_text),
+                'placeholder_counts': placeholder_counts,
+                'preview_text': preview_text,
+            })
+
+        if not previews:
+            return JsonResponse({'error': 'Nessun file PDF valido trovato per la preview.'}, status=400)
+
+        return JsonResponse({
+            'preview_files': previews,
+            'storage_policy': {
+                'raw_file_persisted': False,
+                'anonymized_content_persisted': False,
+                'processing_scope': 'in-memory durante la richiesta API',
+                'download_destination': 'download locale sul dispositivo utente',
+            },
+            'transparency_note': (
+                'Il sistema non salva il file originale ne il testo anonimizzato su database. '
+                'I dati vengono processati in memoria per generare l anteprima e il PDF scaricabile.'
+            ),
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def report_pdf(request):
+    try:
+        if request.content_type != 'application/json':
+            return JsonResponse({'error': 'Invia il report in formato JSON.'}, status=400)
+
+        payload = json.loads(request.body or '{}')
+        report = payload.get('report', payload)
+        if not isinstance(report, dict):
+            return JsonResponse({'error': 'Payload report non valido.'}, status=400)
+
+        report_title = _safe_text(payload.get('title'), 'Report Analisi ESG')
+        pdf_bytes = _render_analysis_report_pdf_bytes(report, title=report_title)
+
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        output_name = f"esg_report_{timestamp}.pdf"
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{output_name}"'
+        response['X-Report-Generated'] = 'true'
+        return response
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
 
