@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import './App.css';
 
 function ComplianceScore({ score }) {
@@ -55,7 +55,9 @@ function App() {
   const [files, setFiles]         = useState([]);
   const [dragging, setDragging]   = useState(false);
   const [loading, setLoading]     = useState(false);
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingReport, setDownloadingReport] = useState(false);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [anonymizePreview, setAnonymizePreview] = useState(null);
   const [report, setReport]       = useState(null);
   const [error, setError]         = useState('');
   const inputRef = useRef(null);
@@ -94,7 +96,12 @@ function App() {
     setError('');
   };
 
-  const clearFiles = () => { setFiles([]); setReport(null); setError(''); };
+  const clearFiles = () => {
+    setFiles([]);
+    setReport(null);
+    setError('');
+    setAnonymizePreview(null);
+  };
 
   const analyze = async () => {
     if (!files.length) return;
@@ -113,33 +120,89 @@ function App() {
     } finally { setLoading(false); }
   };
 
-  const downloadAnonymizedPdfs = async () => {
-    if (!files.length) return;
-    setDownloading(true);
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchPreview = async () => {
+      if (!files.length) {
+        setAnonymizePreview(null);
+        setLoadingPreview(false);
+        return;
+      }
+
+      setLoadingPreview(true);
+      try {
+        const formData = new FormData();
+        files.forEach((file) => formData.append('files', file));
+
+        const res = await fetch('/api/anonymize-preview/', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          throw new Error(data.error || 'Errore durante la generazione dell anteprima trasparenza.');
+        }
+
+        if (!cancelled) {
+          setAnonymizePreview(data);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setAnonymizePreview(null);
+          setError(e.message || 'Errore durante l anteprima anonimizzazione.');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingPreview(false);
+        }
+      }
+    };
+
+    fetchPreview();
+    return () => {
+      cancelled = true;
+    };
+  }, [files]);
+
+  const downloadAnalysisReportPdf = async () => {
+    if (!report) return;
+    setDownloadingReport(true);
     setError('');
     try {
-      for (const file of files) {
-        const formData = new FormData();
-        formData.append('file', file);
-        const res = await fetch('/api/anonymize-pdf/', { method: 'POST', body: formData });
-        if (!res.ok) {
-          let err = "Errore durante l'anonimizzazione del PDF.";
-          try { const d = await res.json(); err = d.error || err; } catch { /* ignore */ }
-          throw new Error(err);
-        }
-        const blob = await res.blob();
-        const cd = res.headers.get('Content-Disposition') || '';
-        const match = cd.match(/filename="?([^";]+)"?/i);
-        const fileName = match ? match[1] : `${file.name.replace(/\.pdf$/i, '')}_anonymized.pdf`;
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = fileName;
-        document.body.appendChild(a); a.click(); a.remove();
-        window.URL.revokeObjectURL(url);
+      const payload = {
+        title: 'Report Completo Analisi ESG',
+        report,
+      };
+      const res = await fetch('/api/report-pdf/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        let err = 'Errore durante la generazione del report PDF.';
+        try { const d = await res.json(); err = d.error || err; } catch { /* ignore */ }
+        throw new Error(err);
       }
+
+      const blob = await res.blob();
+      const cd = res.headers.get('Content-Disposition') || '';
+      const match = /filename="?([^";]+)"?/i.exec(cd);
+      const fileName = match ? match[1] : 'esg_report.pdf';
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
     } catch (e) {
-      setError(e.message || 'Errore durante il download dei PDF anonimizzati.');
-    } finally { setDownloading(false); }
+      setError(e.message || 'Errore durante il download del report PDF.');
+    } finally {
+      setDownloadingReport(false);
+    }
   };
 
   const totalNorms = (report?.norme_rispettate?.length || 0)
@@ -148,6 +211,16 @@ function App() {
   const complianceScore = totalNorms > 0
     ? ((report?.norme_rispettate?.length || 0) / totalNorms) * 100
     : null;
+
+  const previewFiles = anonymizePreview?.preview_files || [];
+  const placeholderTotals = previewFiles.reduce((acc, item) => {
+    Object.entries(item.placeholder_counts || {}).forEach(([key, value]) => {
+      acc[key] = (acc[key] || 0) + Number(value || 0);
+    });
+    return acc;
+  }, {});
+  const totalMaskedEntities = Object.values(placeholderTotals).reduce((sum, count) => sum + Number(count || 0), 0);
+  const placeholderCategories = Object.keys(placeholderTotals).length;
 
   return (
     <div className="app">
@@ -246,7 +319,7 @@ function App() {
         {/* ── Action Bar ── */}
         {!!files.length && (
           <div className="action-bar">
-            <button className="btn btn-primary" onClick={analyze} disabled={loading || downloading}>
+            <button className="btn btn-primary" onClick={analyze} disabled={loading || downloadingReport || loadingPreview}>
               {loading ? (
                 <><span className="spinner" />Analisi in corso...</>
               ) : (
@@ -258,19 +331,21 @@ function App() {
                 </>
               )}
             </button>
-            <button className="btn btn-secondary" onClick={downloadAnonymizedPdfs} disabled={loading || downloading}>
-              {downloading ? (
-                <><span className="spinner spinner-dark" />Creazione PDF...</>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                  </svg>
-                  Scarica PDF Anonimizzati
-                </>
-              )}
-            </button>
-            <button className="btn btn-ghost" onClick={clearFiles} disabled={loading || downloading}>
+            {report && (
+              <button className="btn btn-accent" onClick={downloadAnalysisReportPdf} disabled={loading || downloadingReport || loadingPreview}>
+                {downloadingReport ? (
+                  <><span className="spinner" />Generazione report...</>
+                ) : (
+                  <>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                      <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                    </svg>
+                    Scarica Report PDF
+                  </>
+                )}
+              </button>
+            )}
+            <button className="btn btn-ghost" onClick={clearFiles} disabled={loading || downloadingReport || loadingPreview}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
@@ -413,6 +488,55 @@ function App() {
               </button>
             </div>
           </div>
+        )}
+
+        {!!files.length && (
+          <section className="transparency-panel">
+            <div className="transparency-title-row">
+              <h3 className="transparency-title">Gestione Dati Anonimizzazione</h3>
+              <span className="transparency-state">Anteprima live</span>
+            </div>
+            <p className="transparency-subtle">Il sistema elabora i file in memoria e non persiste dati sensibili.</p>
+
+            {loadingPreview ? (
+              <div className="transparency-loading">Preparazione anteprima in corso...</div>
+            ) : anonymizePreview ? (
+              <>
+                <div className="transparency-inline-info">
+                  <span><strong>{previewFiles.length || files.length}</strong> documenti</span>
+                  <span><strong>{totalMaskedEntities}</strong> entita anonimizzate</span>
+                  <span><strong>{placeholderCategories}</strong> categorie privacy</span>
+                </div>
+
+                <div className="transparency-doc-picker-label">Seleziona l anteprima del documento</div>
+                <div className="transparency-doc-list">
+                  {(anonymizePreview.preview_files || []).map((item, idx) => (
+                    <details className="transparency-doc" key={`${item.file_name}-${idx}`} open={idx === 0}>
+                      <summary className="transparency-doc-head">
+                        <div className="transparency-doc-main">
+                          <strong>{item.file_name}</strong>
+                          <small>{item.original_characters} &rarr; {item.anonymized_characters} caratteri</small>
+                        </div>
+                        <span className="transparency-doc-cta">Apri</span>
+                      </summary>
+                      <div className="preview-placeholders">
+                        {Object.entries(item.placeholder_counts || {}).length ? (
+                          Object.entries(item.placeholder_counts).map(([key, value]) => (
+                            <span key={`${item.file_name}-${key}`} className="preview-pill">{key}: {value}</span>
+                          ))
+                        ) : (
+                          <span className="preview-pill">Nessun placeholder rilevato</span>
+                        )}
+                      </div>
+                      <pre className="preview-text">{item.preview_text || 'Anteprima non disponibile'}</pre>
+                    </details>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="transparency-loading">Anteprima non disponibile.</div>
+            )}
+          </section>
         )}
       </main>
 
