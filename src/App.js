@@ -10,7 +10,7 @@ function ComplianceScore({ score }) {
   return (
     <div className="score-widget">
       <svg width="130" height="130" viewBox="0 0 130 130">
-        <circle cx="65" cy="65" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
+        <circle cx="65" cy="65" r={r} fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="10" />
         <circle
           cx="65" cy="65" r={r} fill="none"
           stroke={color} strokeWidth="10"
@@ -541,7 +541,7 @@ function App() {
       </main>
 
       <footer className="footer">
-        <span>© 2025 ESG Insight · Compliance Intelligence Platform</span>
+        <span>© 2026 ESG Insight · Compliance Intelligence Platform</span>
         <span>Dati elaborati in modo sicuro · GDPR Compliant</span>
       </footer>
     </div>
