@@ -1,3 +1,5 @@
+import { SuccessEnum } from '../enums/success';
+
 // Interfaccia delle classi "success"
 export interface SuccessObj {
   getSuccessObj(): { status: number };
@@ -82,34 +84,6 @@ class ProfileUpdated implements SuccessObj {
 }
 class TokensRecharged implements SuccessObj {
   getSuccessObj() { return { status: 200 }; }
-}
-
-// Enum con tutti i tipi di risposta di successo
-export enum SuccessEnum {
-  UserRegistered     = 'UserRegistered',
-  UserLoggedIn       = 'UserLoggedIn',
-  UsersFetched       = 'UsersFetched',
-  UserFetched        = 'UserFetched',
-  UserCreated        = 'UserCreated',
-  UserUpdated        = 'UserUpdated',
-  UserDeleted        = 'UserDeleted',
-  DocumentsFetched   = 'DocumentsFetched',
-  DocumentFetched    = 'DocumentFetched',
-  DocumentCreated    = 'DocumentCreated',
-  DocumentUpdated    = 'DocumentUpdated',
-  DocumentDeleted    = 'DocumentDeleted',
-  DocumentAnalyzed   = 'DocumentAnalyzed',
-  RegulationsFetched = 'RegulationsFetched',
-  RegulationFetched  = 'RegulationFetched',
-  RegulationCreated  = 'RegulationCreated',
-  RegulationUpdated  = 'RegulationUpdated',
-  RegulationDeleted  = 'RegulationDeleted',
-  AnalysesFetched    = 'AnalysesFetched',
-  AnalysisFetched    = 'AnalysisFetched',
-  TokensFetched      = 'TokensFetched',
-  ProfileFetched     = 'ProfileFetched',
-  ProfileUpdated     = 'ProfileUpdated',
-  TokensRecharged    = 'TokensRecharged',
 }
 
 // Funzione che riceve il tipo di enum di successo e restituisce l'istanza della classe corrispondente

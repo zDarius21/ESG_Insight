@@ -1,7 +1,8 @@
 import { Response } from 'express';
 import { ZodError } from 'zod';
 import { getError, ErrorEnum } from './error';
-import { getSuccess, SuccessEnum } from './success';
+import { getSuccess } from './success';
+import { SuccessEnum } from '../enums/success';
 
 // Pattern Factory per generare le risposte HTTP standard
 class ResponseFactory {

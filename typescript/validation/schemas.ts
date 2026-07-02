@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import * as Messages from '../factory/errorMessages';
+import { ErrorMessagesEnum as Messages } from '../enums/errorMessages';
 import { Role } from '../enums/role';
 
 /**

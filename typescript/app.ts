@@ -17,6 +17,9 @@ dotenv.config();
 
 const app = express();
 
+// Variabile utilizzata per fornire 10 token ogni 6h
+const TOKEN_REFILL = 6 * 60 * 60 * 1000; 
+
 // Rimuove l'header X-Powered-By
 app.disable('x-powered-by');
 app.use(express.json());
@@ -38,8 +41,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
   res.status(500).json({ success: false, error: 'Errore interno del server' });
 });
 
-// Variabile utilizzata per fornire 10 token ogni 6h
-const TOKEN_REFILL = 6 * 60 * 60 * 1000; 
 
 export async function initializeServices(): Promise<void> {
   await Database.getInstance().authenticate();

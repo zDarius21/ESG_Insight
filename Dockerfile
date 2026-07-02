@@ -14,7 +14,7 @@ COPY tsconfig.json ./
 COPY typescript ./typescript
 
 # Copia la configurazione di test (jest + ts-jest) e i file di test
-COPY jest.config.js tsconfig.test.json ./
+COPY jest.config.js ./
 COPY tests ./tests
 
 # Compila il codice TypeScript in JavaScript nella cartella "dist"
