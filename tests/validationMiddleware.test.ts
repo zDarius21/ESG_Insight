@@ -59,7 +59,7 @@ describe('validate', () => {
       validate({ body: rechargeTokensSchema })(req, res, next);
 
       expect(next).toHaveBeenCalledTimes(1);
-      expect(req.body.tokens).toBe(10); // coercizione Zod
+      expect(req.body.tokens).toBe(10); 
     });
 
     it.each([

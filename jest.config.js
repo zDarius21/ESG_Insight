@@ -8,6 +8,6 @@ module.exports = {
   clearMocks: true,
   // tsconfig dedicato ai test: include sia il sorgente sia la cartella tests/
   transform: {
-    '^.+\\.ts$': ['ts-jest', { tsconfig: 'tsconfig.test.json' }],
+    '^.+\\.ts$': ['ts-jest', { tsconfig: '<rootDir>/tests/tsconfig.json' }],
   },
 };

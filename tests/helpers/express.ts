@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 
 /**
  * Helper per creare oggetti Express finti nei test dei middleware,
- * così da ridurre il boilerplate (come mockReq/mockRes/mockNext del riferimento).
+ * così da ridurre il boilerplate.
  */
 
 /** Crea una Request finta; passare un override per impostare body/params/headers/user. */
