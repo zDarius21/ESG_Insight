@@ -7,7 +7,6 @@ Il repository unisce in un unico progetto:
 - **[Hack_AI_Thon](https://github.com/Bargi20/Hack_AI_Thon)** — interfaccia React e motore di analisi AI in Django (anonimizzazione, recupero semantico, LLM locale);
 - **[Programmazione_Avanzata](https://github.com/zDarius21/Programmazione_Avanzata)** — backend Express/TypeScript con autenticazione JWT, gestione utenti e token, normative, documenti su MinIO e report.
 
-La storia dei commit di entrambi i progetti è stata importata (`git subtree`) ed è consultabile con `git log`.
 
 ## Indice
 
