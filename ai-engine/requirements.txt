@@ -5,6 +5,7 @@ uvicorn
 pydantic>=2
 requests
 python-dotenv
+gunicorn
 
 torch
 transformers
@@ -14,10 +15,7 @@ numpy
 scipy
 scikit-learn
 faiss-cpu
-onnxruntime
 
 pdfplumber
 PyMuPDF
 pillow
-chromadb
-google-genai>=1.40

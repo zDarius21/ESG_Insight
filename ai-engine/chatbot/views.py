@@ -1,6 +1,7 @@
 import json
 import re
 import hashlib
+import threading
 from textwrap import wrap
 from datetime import datetime
 import numpy as np
@@ -16,6 +17,11 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 from sentence_transformers import SentenceTransformer
 
+# Il server gira con piu thread: i lock evitano che richieste concorrenti carichino
+# due volte lo stesso modello in memoria o usino la pipeline LLM in parallelo.
+_model_lock = threading.RLock()
+_generation_lock = threading.Lock()
+
 # ── Modello embedding (caricato una volta sola all'avvio) ──────────────────────
 EMBEDDING_MODEL = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
 _embedder = None
@@ -23,7 +29,9 @@ _embedder = None
 def get_embedder():
     global _embedder
     if _embedder is None:
-        _embedder = SentenceTransformer(EMBEDDING_MODEL, device="cpu")
+        with _model_lock:
+            if _embedder is None:
+                _embedder = SentenceTransformer(EMBEDDING_MODEL, device="cpu")
     return _embedder
 
 
@@ -215,11 +223,15 @@ _law_embeddings = None
 def get_law_index():
     global _law_index, _law_embeddings
     if _law_index is None:
-        embedder = get_embedder()
-        texts = [f"passage: {law['text']}" for law in LAW_DATABASE]
-        _law_embeddings = embedder.encode(texts, normalize_embeddings=True).astype(np.float32)
-        _law_index = faiss.IndexFlatIP(_law_embeddings.shape[1])
-        _law_index.add(_law_embeddings)
+        with _model_lock:
+            if _law_index is None:
+                embedder = get_embedder()
+                texts = [f"passage: {law['text']}" for law in LAW_DATABASE]
+                embeddings = embedder.encode(texts, normalize_embeddings=True).astype(np.float32)
+                index = faiss.IndexFlatIP(embeddings.shape[1])
+                index.add(embeddings)
+                # Assegnato solo quando e completo, per non esporre un indice vuoto ad altri thread
+                _law_embeddings, _law_index = embeddings, index
     return _law_index
 
 
@@ -679,16 +691,21 @@ def get_local_llm():
     if _llm_generator is not None:
         return _llm_generator
 
-    errors = []
-    for candidate in [LOCAL_LLM_MODEL, LOCAL_LLM_FALLBACK_MODEL]:
-        if not candidate:
-            continue
-        try:
-            _llm_generator, _llm_tokenizer = _build_text_generation_pipeline(candidate)
-            _llm_loaded_model_name = candidate
+    with _model_lock:
+        # Un altro thread potrebbe aver completato il caricamento mentre si attendeva il lock
+        if _llm_generator is not None:
             return _llm_generator
-        except Exception as exc:
-            errors.append(f"{candidate}: {exc}")
+
+        errors = []
+        for candidate in [LOCAL_LLM_MODEL, LOCAL_LLM_FALLBACK_MODEL]:
+            if not candidate:
+                continue
+            try:
+                _llm_generator, _llm_tokenizer = _build_text_generation_pipeline(candidate)
+                _llm_loaded_model_name = candidate
+                return _llm_generator
+            except Exception as exc:
+                errors.append(f"{candidate}: {exc}")
 
     raise RuntimeError(
         "Impossibile caricare un modello Llama locale. "
@@ -714,7 +731,8 @@ def local_llama_generate(
         generation_kwargs["temperature"] = temperature
         generation_kwargs["top_p"] = 0.9
 
-    output = generator(prompt, **generation_kwargs)
+    with _generation_lock:
+        output = generator(prompt, **generation_kwargs)
     return output[0]["generated_text"].strip()
 
 
@@ -1329,6 +1347,19 @@ def chat(request):
 
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+# ── VIEW: Stato del servizio ───────────────────────────────────────────────────
+@require_http_methods(["GET"])
+def health(request):
+    # Usata dall'healthcheck di Docker: risponde subito, anche mentre i modelli sono in caricamento
+    return JsonResponse({
+        'status': 'ok',
+        'embedder_loaded': _embedder is not None,
+        'llm_loaded': _llm_generator is not None,
+        'llm_model': _llm_loaded_model_name,
+        'max_semantic_evaluations': MAX_SEMANTIC_EVALUATIONS,
+    })
 
 
 # ── VIEW: Analisi documento ────────────────────────────────────────────────────

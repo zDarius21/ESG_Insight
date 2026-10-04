@@ -18,18 +18,22 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 load_dotenv(Path(__file__).resolve().parent / '.env')
+# Nel monorepo il .env condiviso si trova nella root (le variabili gia caricate non vengono sovrascritte)
+load_dotenv(BASE_DIR.parent / '.env')
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('DJANGO')
+# DJANGO resta supportata per compatibilita con il .env originale del progetto
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY') or os.getenv('DJANGO')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = []
+# In Docker il backend chiama il servizio come http://ai-engine:8000, quindi l'host va consentito esplicitamente
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('DJANGO_ALLOWED_HOSTS', '').split(',') if h.strip()]
 
 
 # Application definition
@@ -141,6 +145,9 @@ CORS_ALLOWED_ORIGINS = [
 LOCAL_LLM_MODEL = os.getenv('LOCAL_LLM_MODEL', 'meta-llama/Llama-3.2-3B-Instruct')
 LOCAL_LLM_FALLBACK_MODEL = os.getenv('LOCAL_LLM_FALLBACK_MODEL', 'TinyLlama/TinyLlama-1.1B-Chat-v1.0')
 LOCAL_LLM_MAX_NEW_TOKENS = int(os.getenv('LOCAL_LLM_MAX_NEW_TOKENS', '512'))
+# Numero di normative valutate semanticamente dall'LLM per ogni analisi (le altre usano le regole).
+# 0 disattiva l'LLM: analisi piu veloce e leggera, basata su embedding + regole.
+MAX_SEMANTIC_EVALUATIONS = int(os.getenv('MAX_SEMANTIC_EVALUATIONS', '2'))
 
 # Upload multiplo PDF: limite request e file in memoria piu alto
 # per consentire l'analisi aggregata di piu documenti nello stesso invio.
