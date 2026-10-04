@@ -13,6 +13,7 @@ export enum SuccessEnum {
   DocumentUpdated    = 'DocumentUpdated',
   DocumentDeleted    = 'DocumentDeleted',
   DocumentAnalyzed   = 'DocumentAnalyzed',
+  AnonymizationPreviewed = 'AnonymizationPreviewed',
   RegulationsFetched = 'RegulationsFetched',
   RegulationFetched  = 'RegulationFetched',
   RegulationCreated  = 'RegulationCreated',

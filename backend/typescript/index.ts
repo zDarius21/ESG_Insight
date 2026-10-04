@@ -1,3 +1,5 @@
+// Deve restare il primo import: le variabili d'ambiente servono già durante l'import dei moduli successivi
+import './env';
 import app, { initializeServices } from './app';
 
 const APP_PORT = process.env.PORT || 3000;

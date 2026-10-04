@@ -23,6 +23,8 @@
 Il progetto consiste nell'implementare il backend del progetto realizzato per l'Hack-AI-Thon, volto a verificare la conformità di documenti rispetto a normative ESG.
 Gli utenti autenticati possono caricare i metadati di un documento e richiederne l'analisi: il sistema produce un'`Analysis` con i relativi `ComplianceResult`, esportabile come report.
 
+> **Monorepo ESG Insight** — questo backend fa parte del monorepo descritto nel [README principale](../README.md): è l'unico punto di accesso del frontend React ([frontend/](../frontend/)) e delega l'analisi di conformità al motore AI Django ([ai-engine/](../ai-engine/)), raggiungibile solo dalla rete interna. Il risultato dell'analisi viene salvato sul documento (`analysisResult`) e usato per generare il report PDF.
+
 Le operazioni principali sono:
 * Autenticazione e registrazione con rilascio di JWT firmati in RS256
 * Gestione utenti (solo admin)
@@ -828,7 +830,9 @@ Le **rotte dei documenti** permettono agli utenti di ottenere ed inviare nuovi d
 | `GET` | /documents | Sì | Restituisce la lista dei documenti dell'utente |
 | `GET` | /documents/:id | Sì | Restituisce i dettagli di un singolo documento |
 | `GET` | /documents/:id/file | Sì | Scarica il file PDF originale del documento |
+| `GET` | /documents/:id/report | Sì | Scarica il report PDF dell'analisi del documento |
 | `POST` | /documents | Sì | Carica i metadati di un nuovo documento |
+| `POST` | /documents/anonymize-preview | Sì | Anteprima dell'anonimizzazione di un PDF (senza salvarlo) |
 | `PATCH` | /documents/:id | Sì | Modifica i metadati di un documento esistente |
 | `DELETE` | /documents/:id | Sì | Elimina un documento |
 | `POST` | /documents/:id/analyze | Sì | Avvia l'analisi di conformità su un documento |
@@ -886,6 +890,48 @@ Scarica il file PDF originale associato a un documento dell'utente. Il file vien
 - `ERR_STORAGE_ERROR` — Errore durante l'operazione sul file storage
 
 **Successo:** `200 OK` — Ritorna il file PDF con `Content-Type: application/pdf`
+
+---
+
+#### GET /documents/:id/report
+
+Scarica il report PDF generato dall'analisi di un documento dell'utente. A differenza di `GET /reports/:id` non serve conoscere l'id del report: è sufficiente l'id del documento (ogni documento può essere analizzato una sola volta).
+
+**Parametri URL:**
+- `id` — intero positivo, identificatore del documento
+
+**Errori possibili:**
+- `ERR_TOKEN_MISSING` — Token mancante
+- `ERR_TOKEN_INVALID` — Token non valido o scaduto
+- `ERR_VALIDATION` — Dati della richiesta non validi
+- `ERR_DOCUMENT_NOT_FOUND` — Documento non trovato
+- `ERR_REPORT_NOT_READY` — Il report non è ancora disponibile, eseguire prima l'analisi del documento
+- `ERR_REPORT_NOT_FOUND` — Report non trovato
+- `ERR_STORAGE_ERROR` — Errore durante l'operazione sul file storage
+
+**Successo:** `200 OK` — Ritorna il file PDF con `Content-Type: application/pdf`
+
+---
+
+#### POST /documents/anonymize-preview
+
+Restituisce l'anteprima dell'anonimizzazione di un PDF calcolata dal motore AI: per ogni categoria di dato sensibile (email, IBAN, codice fiscale, persone, città, ...) il numero di occorrenze mascherate e un estratto del testo così come verrà analizzato. Il file **non** viene salvato e non vengono addebitati token: il frontend la usa per mostrare all'utente cosa viene anonimizzato prima di avviare l'analisi.
+
+**Body richiesta** (`multipart/form-data`):
+```
+file        → file PDF (max 10 MB)
+```
+
+**Errori possibili:**
+- `ERR_TOKEN_MISSING` — Token mancante
+- `ERR_TOKEN_INVALID` — Token non valido o scaduto
+- `ERR_INVALID_FILE_TYPE` — Solo file PDF sono accettati
+- `ERR_FILE_REQUIRED` — Il file PDF è obbligatorio
+- `ERR_DOCUMENT_NOT_READABLE` — Il PDF non contiene testo analizzabile
+- `ERR_AI_ENGINE_UNAVAILABLE` — Il motore di analisi AI non è al momento raggiungibile
+- `ERR_AI_ENGINE_ERROR` — Errore durante l'analisi AI del documento
+
+**Successo:** `200 OK` — Ritorna `{ file_name, original_characters, anonymized_characters, placeholder_counts, preview_text }`
 
 ---
 
@@ -1103,9 +1149,9 @@ Elimina un documento dell'utente autenticato. Il documento deve appartenere all'
 
 #### POST /documents/:id/analyze
 
-Avvia l'analisi di conformità ESG su un documento. Il sistema genera un report PDF, lo carica su MinIO e registra l'analisi nel database tramite transazione atomica. Il costo dell'operazione è **10 token**. Il documento deve essere nello stato `pending` (non ancora analizzato).
+Avvia l'analisi di conformità ESG su un documento. Il backend recupera il PDF originale da MinIO e lo invia al motore AI ([ai-engine/](../ai-engine/)), che estrae il testo, lo anonimizza e valuta la conformità alle normative (recupero semantico con embedding + FAISS, LLM locale con fallback a regole). Con il risultato il sistema genera il report PDF, lo carica su MinIO e registra l'analisi nel database tramite transazione atomica, salvando il risultato nel campo `analysisResult` del documento. Il costo dell'operazione è **10 token**, addebitati solo se l'analisi va a buon fine. Il documento deve essere nello stato `pending` (non ancora analizzato) e avere un file PDF associato.
 
-
+L'analisi può richiedere alcuni minuti (il motore AI lavora su CPU e al primo avvio scarica i modelli): eventuali richieste ripetute sullo stesso documento mentre l'analisi è in corso vengono rifiutate con `ERR_ANALYSIS_IN_PROGRESS`.
 
 **Parametri URL:**
 - `id` — intero positivo, identificatore del documento
@@ -1116,11 +1162,28 @@ Avvia l'analisi di conformità ESG su un documento. Il sistema genera un report 
 - `ERR_VALIDATION` — Dati della richiesta non validi
 - `ERR_DOCUMENT_NOT_FOUND` — Documento non trovato
 - `ERR_DOCUMENT_ALREADY_ANALYZED` — Il documento è già stato analizzato
+- `ERR_FILE_NOT_AVAILABLE` — Il file originale non è disponibile per questo documento
 - `ERR_INSUFFICIENT_TOKENS` — Token insufficienti per eseguire l'analisi
+- `ERR_ANALYSIS_IN_PROGRESS` — L'analisi del documento è già in corso
+- `ERR_DOCUMENT_NOT_READABLE` — Il PDF non contiene testo analizzabile (es. scansione senza OCR)
+- `ERR_AI_ENGINE_UNAVAILABLE` — Il motore di analisi AI non è al momento raggiungibile
+- `ERR_AI_ENGINE_ERROR` — Errore durante l'analisi AI del documento
 - `ERR_STORAGE_ERROR` — Errore durante l'operazione sul file storage
 - `ERR_DATABASE_ERROR` — Errore durante l'operazione sul database
 
-**Successo:** `200 OK` — Ritorna `{ document, reportId, tokensRemaining }`
+**Successo:** `200 OK` — Ritorna `{ document, reportId, tokensRemaining }`, dove `document.analysisResult` contiene:
+
+```json
+{
+  "tipo_documento": ["Bilancio ESG"],
+  "normative_analizzate": ["CSRD - Corporate Sustainability Reporting Directive", "..."],
+  "norme_rispettate": [{ "norma": "...", "motivo": "..." }],
+  "norme_non_rispettate": [{ "norma": "...", "motivo": "Requisiti mancanti: ..." }],
+  "norme_borderline": [],
+  "azioni_correttive": ["..."],
+  "data_analisi": "2026-10-04T10:00:00.000Z"
+}
+```
 
 ```mermaid
 sequenceDiagram
@@ -1134,6 +1197,7 @@ sequenceDiagram
     participant UserDAO as UserDAO
     participant DB@{ shape: "database" } as Database
     participant Minio as MinIO Storage
+    participant AI as AiEngine<br/>(motore AI Django)
     participant ReportDAO as ReportDAO
 
     Client->>+Router: POST /documents/:id/analyze
@@ -1173,6 +1237,9 @@ sequenceDiagram
         alt document.status === "analyzed"
             Controller-->>Client: ERR_DOCUMENT_ALREADY_ANALYZED<br/>{ error: "Il documento è già stato analizzato" }
         end
+        alt document.filePath assente
+            Controller-->>Client: ERR_FILE_NOT_AVAILABLE<br/>{ error: "Il file originale non è disponibile per questo documento" }
+        end
     end
 
     Controller->>+UserDAO: findByIdFull(userId)
@@ -1184,12 +1251,31 @@ sequenceDiagram
         alt utente non trovato o tokens < ANALYSIS_TOKEN_COST (10)
             Controller-->>Client: ERR_INSUFFICIENT_TOKENS<br/>{ error: "Token insufficienti per eseguire l'analisi" }
         end
+        alt analisi dello stesso documento già in corso
+            Controller-->>Client: ERR_ANALYSIS_IN_PROGRESS<br/>{ error: "L'analisi del documento è già in corso" }
+        end
+    end
+
+    rect rgb(240, 240, 255)
+        note over Controller,AI: Analisi di conformità tramite il motore AI
+        Controller->>+Minio: getObject(DOCUMENTS_BUCKET, filePath)
+        Minio-->>-Controller: PDF originale
+        Controller->>+AI: POST /api/analyze/ (multipart, campo "files")
+        note over AI: Estrazione testo → anonimizzazione →<br/>embedding + FAISS → LLM locale / regole
+        AI-->>-Controller: norme rispettate / non rispettate,<br/>azioni correttive, tipo documento
+        alt motore AI non raggiungibile o in timeout
+            Controller-->>Client: ERR_AI_ENGINE_UNAVAILABLE
+        else PDF senza testo analizzabile (400)
+            Controller-->>Client: ERR_DOCUMENT_NOT_READABLE
+        else errore interno del motore AI
+            Controller-->>Client: ERR_AI_ENGINE_ERROR
+        end
     end
 
     rect rgb(240, 255, 240)
         note over Controller,Minio: Generazione e upload report ESG
-        Controller->>Controller: generateReport(document)
-        note over Controller: Genera PDF ESG<br/>con pdfkit in memoria
+        Controller->>Controller: generateReport(document, analysis)
+        note over Controller: Genera PDF ESG con i risultati<br/>dell'analisi, con pdfkit in memoria
         Controller->>+Minio: putObject(REPORTS_BUCKET,<br/>"<id>/report.pdf", pdfBuffer)
         Minio-->>-Controller: ok
     end
@@ -1204,8 +1290,8 @@ sequenceDiagram
         note over Controller,ReportDAO: Transazione DB (atomica)<br/>tutte le scritture o nessuna
         Controller->>+DB: BEGIN TRANSACTION
 
-        Controller->>DocDAO: document.update({ status: "analyzed", reportPath }, { transaction })
-        DocDAO->>DB: UPDATE documents SET<br/>status, reportPath WHERE id = ?
+        Controller->>DocDAO: document.update({ status: "analyzed", reportPath, analysisResult }, { transaction })
+        DocDAO->>DB: UPDATE documents SET<br/>status, reportPath, analysisResult WHERE id = ?
 
         Controller->>UserDAO: deductTokens(userId, 10, transaction)
         UserDAO->>DB: UPDATE users SET<br/>tokens = tokens - 10 WHERE id = ?
@@ -1309,7 +1395,7 @@ Scarica il report PDF generato in seguito all'analisi di conformità ESG di un d
 
 ## Design Pattern Implementati
 
-**Singleton** — gestisce la connessione al database ([database.ts](typescript/singleton/database.ts)) e il client MinIO ([minio.ts](typescript/singleton/minio.ts)) garantendo un'unica istanza condivisa lungo tutto il ciclo di vita dell'applicazione.
+**Singleton** — gestisce la connessione al database ([database.ts](typescript/singleton/database.ts)), il client MinIO ([minio.ts](typescript/singleton/minio.ts)) e il client HTTP verso il motore AI ([aiEngine.ts](typescript/singleton/aiEngine.ts)) garantendo un'unica istanza condivisa lungo tutto il ciclo di vita dell'applicazione.
 *Perché:* aprire una nuova connessione/client a ogni richiesta sprecherebbe risorse e potrebbe esaurire il pool del DB; un'unica istanza centralizza la configurazione (un solo punto da modificare) e assicura che tutto il codice lavori sulla stessa connessione.
 
 **Factory** — crea oggetti di risposta standardizzati di successo/errore con HTTP status code e messaggi coerenti ([responseFactory.ts](typescript/factory/responseFactory.ts), [error.ts](typescript/factory/error.ts)).
@@ -1327,18 +1413,21 @@ Scarica il report PDF generato in seguito all'analisi di conformità ESG di un d
 ## Avvio del Servizio
 Requisiti: Docker installato
 
+Il backend viene avviato insieme al resto della piattaforma (frontend, motore AI, PostgreSQL, MinIO) dal `docker-compose.yml` nella root del monorepo:
+
 ```bash
-$ docker-compose up
+$ cp .env.example .env    # dalla root del repository
+$ docker compose up --build
 ```
 
-Il servizio è disponibile sulla porta **3000** tramite cURL o Postman.
+Il servizio è disponibile sulla porta **3000** tramite cURL o Postman, l'interfaccia web su **http://localhost:8080**. Le chiavi RSA per firmare i JWT vengono generate automaticamente al primo avvio in `backend/keys/` (in locale si possono generare con `npm run keys`). Per l'avvio senza Docker vedere il [README principale](../README.md#sviluppo-locale).
 
 ## Testing
 Importare la collection Postman fornita `postman_collection.json`  e l'environment fornito `postman_environment.json` per eseguire i test predefiniti su tutti gli endpoint. I token JWT sono firmati con chiave RS256. Inoltre, sono stati utilizzati dei test automatizzati tramite jest.
 I test tramite jest possono essere eseguiti tramite il seguente comando:
 
 ```bash
-$ docker compose exec app npm test
+$ docker compose exec backend npm test
 ```
 I risultati dei test sono mostrati nella seguente figura:
 
@@ -1374,6 +1463,7 @@ Per effettuare le operazioni di POST di documenti o normative, utilizzare i file
 - **express-async-errors** - Gestione errori asincroni in Express
 - **ts-node-dev** - Ambiente di sviluppo con reload automatico
 - **jest** - Sistema di testing automatizzato
+- **Motore AI (Django)** - Servizio interno di analisi richiamato via HTTP con `fetch` nativo di Node.js
 
 
 

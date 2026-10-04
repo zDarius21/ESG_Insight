@@ -106,6 +106,20 @@ class ValidationError implements ErrorObj {
   getErrorObj() { return { status: 400, message: ErrorMessagesEnum.ERR_VALIDATION }; }
 }
 
+// Classi per errori relativi all'analisi tramite il motore AI
+class AnalysisInProgress implements ErrorObj {
+  getErrorObj() { return { status: 409, message: ErrorMessagesEnum.ERR_ANALYSIS_IN_PROGRESS }; }
+}
+class DocumentNotReadable implements ErrorObj {
+  getErrorObj() { return { status: 422, message: ErrorMessagesEnum.ERR_DOCUMENT_NOT_READABLE }; }
+}
+class AiEngineUnavailable implements ErrorObj {
+  getErrorObj() { return { status: 503, message: ErrorMessagesEnum.ERR_AI_ENGINE_UNAVAILABLE }; }
+}
+class AiEngineError implements ErrorObj {
+  getErrorObj() { return { status: 502, message: ErrorMessagesEnum.ERR_AI_ENGINE_ERROR }; }
+}
+
 // Enum con tutti i tipi di errore
 export enum ErrorEnum {
   TokenMissing             = 'TokenMissing',
@@ -137,6 +151,10 @@ export enum ErrorEnum {
   InvalidTokenAmount       = 'InvalidTokenAmount',
   TokenCapExceeded         = 'TokenCapExceeded',
   ValidationError          = 'ValidationError',
+  AnalysisInProgress       = 'AnalysisInProgress',
+  DocumentNotReadable      = 'DocumentNotReadable',
+  AiEngineUnavailable      = 'AiEngineUnavailable',
+  AiEngineError            = 'AiEngineError',
 }
 
 // Funzione che riceve il tipo di enum di errore e restituisce l'istanza della classe corrispondente
@@ -171,6 +189,10 @@ export function getError(type: ErrorEnum): ErrorObj {
     case ErrorEnum.InvalidTokenAmount:       return new InvalidTokenAmount();
     case ErrorEnum.TokenCapExceeded:         return new TokenCapExceeded();
     case ErrorEnum.ValidationError:          return new ValidationError();
+    case ErrorEnum.AnalysisInProgress:       return new AnalysisInProgress();
+    case ErrorEnum.DocumentNotReadable:      return new DocumentNotReadable();
+    case ErrorEnum.AiEngineUnavailable:      return new AiEngineUnavailable();
+    case ErrorEnum.AiEngineError:            return new AiEngineError();
     default: throw new Error(`Errore sconosciuto: ${type}`);
   }
 }

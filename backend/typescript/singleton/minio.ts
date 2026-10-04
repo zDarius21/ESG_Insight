@@ -30,6 +30,21 @@ class MinioStorage {
       }
     }
   }
+
+  /**
+   * Legge un oggetto da un bucket e ne restituisce l'intero contenuto in memoria.
+   * @param bucket Il bucket che contiene l'oggetto
+   * @param key La chiave dell'oggetto
+   * @returns Il contenuto dell'oggetto come Buffer
+   */
+  static async getObjectBuffer(bucket: string, key: string): Promise<Buffer> {
+    const stream = await MinioStorage.getInstance().getObject(bucket, key);
+    const chunks: Buffer[] = [];
+    for await (const chunk of stream) {
+      chunks.push(Buffer.from(chunk));
+    }
+    return Buffer.concat(chunks);
+  }
 }
 
 export default MinioStorage;

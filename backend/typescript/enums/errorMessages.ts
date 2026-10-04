@@ -31,6 +31,10 @@ export enum ErrorMessagesEnum {
   ERR_INVALID_TOKEN_AMOUNT       = 'Il campo tokens deve essere un intero positivo',
   ERR_TOKEN_CAP_EXCEEDED         = 'La ricarica supera il massimo consentito di 100 token',
   ERR_VALIDATION                 = 'Dati della richiesta non validi',
+  ERR_ANALYSIS_IN_PROGRESS       = 'L\'analisi del documento è già in corso',
+  ERR_DOCUMENT_NOT_READABLE      = 'Il PDF non contiene testo analizzabile (es. documento scansionato senza OCR)',
+  ERR_AI_ENGINE_UNAVAILABLE      = 'Il motore di analisi AI non è al momento raggiungibile, riprovare tra qualche minuto',
+  ERR_AI_ENGINE_ERROR            = 'Errore durante l\'analisi AI del documento',
 
   // Messaggi di validazione a livello di singolo campo usati negli schemi Zod
   VAL_ID_INVALID           = 'id deve essere un intero positivo',

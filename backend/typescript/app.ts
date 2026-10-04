@@ -1,6 +1,5 @@
 import express from 'express';
 import 'express-async-errors';
-import dotenv from 'dotenv';
 import { AppError } from './factory/error';
 import Database from './singleton/database';
 import MinioStorage from './singleton/minio';
@@ -12,8 +11,6 @@ import regulationRoutes from './routes/regulations';
 import documentRoutes from './routes/documents';
 import analysesRoutes from './routes/analyses';
 import reportsRoutes from './routes/reports';
-
-dotenv.config();
 
 const app = express();
 
@@ -47,6 +44,10 @@ export async function initializeServices(): Promise<void> {
   await Database.getInstance().sync();
   await Database.getInstance().query(
     `ALTER TABLE users ADD COLUMN IF NOT EXISTS tokens INTEGER NOT NULL DEFAULT 100;`
+  );
+  // Colonna con il risultato dell'analisi AI, aggiunta anche ai database creati prima dell'integrazione
+  await Database.getInstance().query(
+    `ALTER TABLE documents ADD COLUMN IF NOT EXISTS "analysisResult" JSONB;`
   );
   await MinioStorage.ensureBuckets();
 

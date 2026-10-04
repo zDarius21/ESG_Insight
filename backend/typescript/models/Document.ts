@@ -1,5 +1,6 @@
 import { DataTypes, Model, Optional } from 'sequelize';
 import Database from '../singleton/database';
+import type { AnalysisResult } from '../singleton/aiEngine';
 import { DocumentStatus } from '../enums/documentStatus';
 
 // Attributi completi di un documento
@@ -11,11 +12,12 @@ export interface DocumentAttributes {
   status: DocumentStatus;
   filePath: string | null;
   reportPath: string | null;
+  analysisResult: AnalysisResult | null;
 }
 
-// In fase di creazione: id è auto-generato, status ha default 'pending', i path sono opzionali
+// In fase di creazione: id è auto-generato, status ha default 'pending', i path e il risultato dell'analisi sono opzionali
 
-export interface DocumentCreationAttributes extends Optional<DocumentAttributes, 'id' | 'status' | 'filePath' | 'reportPath'> {}
+export interface DocumentCreationAttributes extends Optional<DocumentAttributes, 'id' | 'status' | 'filePath' | 'reportPath' | 'analysisResult'> {}
 /**
  * Rappresenta un documento caricato nel sistema. Estende il modello Sequelize per interagire con la tabella 'documents' nel database.
  * Contiene informazioni sul documento, come titolo, descrizione, stato e percorsi dei file.
@@ -28,6 +30,7 @@ export interface DocumentCreationAttributes extends Optional<DocumentAttributes,
  * - status: Stato del documento (es. pending, approved, rejected).
  * - filePath: Percorso del file del documento.
  * - reportPath: Percorso del file del report generato.
+ * - analysisResult: Risultato dell'analisi di conformità prodotto dal motore AI (JSON).
  */
 class Document extends Model<DocumentAttributes, DocumentCreationAttributes> implements DocumentAttributes {
   declare id: number;
@@ -37,6 +40,7 @@ class Document extends Model<DocumentAttributes, DocumentCreationAttributes> imp
   declare status: DocumentStatus;
   declare filePath: string | null;
   declare reportPath: string | null;
+  declare analysisResult: AnalysisResult | null;
 }
 
 /**
@@ -52,6 +56,7 @@ Document.init(
     status:      { type: DataTypes.ENUM(...Object.values(DocumentStatus)), allowNull: false, defaultValue: DocumentStatus.Pending },
     filePath:    { type: DataTypes.STRING(500),                       allowNull: true },
     reportPath:  { type: DataTypes.STRING(500),                       allowNull: true },
+    analysisResult: { type: DataTypes.JSONB,                          allowNull: true },
   },
   {
     sequelize: Database.getInstance(),

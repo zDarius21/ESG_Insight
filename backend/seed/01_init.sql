@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS regulations (
 );
 
 
--- Creazione della tabella documents per i documenti caricati dagli utenti da analizzare, impostando un titolo, il riferimento all'idUtente, una descrizione e lo stato dell'analisi del documento. Lo stato predefinito è "pending" e verrà modificato una volta completata l'analisi in "analyzed".
+-- Creazione della tabella documents per i documenti caricati dagli utenti da analizzare, impostando un titolo, il riferimento all'idUtente, una descrizione e lo stato dell'analisi del documento. Lo stato predefinito è "pending" e verrà modificato una volta completata l'analisi in "analyzed". Il risultato dell'analisi prodotto dal motore AI viene salvato in "analysisResult".
 
 CREATE TABLE IF NOT EXISTS documents (
   id            SERIAL PRIMARY KEY,
@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS documents (
   status        document_status NOT NULL DEFAULT 'pending',
   "filePath"    VARCHAR(500),
   "reportPath"  VARCHAR(500),
+  "analysisResult" JSONB,
   "createdAt"   TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   "updatedAt"   TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
