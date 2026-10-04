@@ -1,0 +1,93 @@
+<svg viewBox="0 0 980 1518" xmlns="http://www.w3.org/2000/svg" font-family="Segoe UI, Helvetica, Arial, sans-serif">
+<rect x="0" y="0" width="980" height="1518" fill="#ffffff"/>
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L8,3 L0,6 z" fill="#7f8c8d"/></marker>
+<marker id="arrowG" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L10,4 L0,8 z" fill="none" stroke="#34495e" stroke-width="1.3"/></marker>
+<marker id="inc" markerWidth="12" markerHeight="12" refX="10" refY="4" orient="auto" markerUnits="strokeWidth">
+<path d="M0,0 L10,4 L0,8" fill="none" stroke="#d48806" stroke-width="1.4"/></marker>
+</defs>
+<rect x="300" y="40" width="440" height="1438" rx="14" fill="none" stroke="#95a5a6" stroke-width="2" stroke-dasharray="2 0"/>
+<text x="520" y="60" font-size="14.5" font-weight="bold" text-anchor="middle" fill="#34495e">Sistema — Document Compliance Checker</text>
+<rect x="320.0" y="60.0" width="400.0" height="188.0" rx="10" fill="#fdf2e8" stroke="#d48806" stroke-width="1.6"/>
+<text x="520.0" y="80.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#d48806">Autenticazione</text>
+<rect x="320.0" y="274.0" width="400.0" height="328.0" rx="10" fill="#eafaf1" stroke="#1e8449" stroke-width="1.6"/>
+<text x="520.0" y="294.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#1e8449">Documenti</text>
+<rect x="320.0" y="628.0" width="400.0" height="258.0" rx="10" fill="#fef9e7" stroke="#b7950b" stroke-width="1.6"/>
+<text x="520.0" y="648.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#b7950b">Normative</text>
+<rect x="320.0" y="912.0" width="400.0" height="118.0" rx="10" fill="#eef3fb" stroke="#2471a3" stroke-width="1.6"/>
+<text x="520.0" y="932.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#2471a3">Analisi</text>
+<rect x="320.0" y="1056.0" width="400.0" height="118.0" rx="10" fill="#f4ecf7" stroke="#8e44ad" stroke-width="1.6"/>
+<text x="520.0" y="1076.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#8e44ad">Report</text>
+<rect x="320.0" y="1200.0" width="400.0" height="258.0" rx="10" fill="#fdedec" stroke="#c0392b" stroke-width="1.6"/>
+<text x="520.0" y="1220.0" font-size="13.5" font-weight="bold" text-anchor="middle" fill="#c0392b">Utenti &amp; Token</text>
+<path d="M104.0,130.0 C221.0,130.0 221.0,134.0 338.0,134.0" fill="none" stroke="#16a085" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,130.0 C319.0,130.0 319.0,134.0 534.0,134.0" fill="none" stroke="#16a085" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,204.0 338.0,204.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,204.0 534.0,204.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,348.0 338.0,348.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,348.0 534.0,348.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,418.0 338.0,418.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,418.0 534.0,418.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,488.0 338.0,488.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,488.0 534.0,488.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,558.0 338.0,558.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,702.0 338.0,702.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,702.0 534.0,702.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C221.0,1368.0 221.0,772.0 338.0,772.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C319.0,1368.0 319.0,772.0 534.0,772.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C221.0,1368.0 221.0,842.0 338.0,842.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,986.0 338.0,986.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C319.0,759.0 319.0,986.0 534.0,986.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,1130.0 338.0,1130.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,759.0 C221.0,759.0 221.0,1274.0 338.0,1274.0" fill="none" stroke="#2980b9" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C319.0,1368.0 319.0,1274.0 534.0,1274.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C221.0,1368.0 221.0,1344.0 338.0,1344.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C319.0,1368.0 319.0,1344.0 534.0,1344.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C221.0,1368.0 221.0,1414.0 338.0,1414.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M104.0,1368.0 C319.0,1368.0 319.0,1414.0 534.0,1414.0" fill="none" stroke="#c0392b" stroke-width="1.1" opacity="0.5" marker-end="url(#arrow)"/>
+<path d="M702.0,204.0 C728.5,204.0 728.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M506.0,204.0 C630.5,204.0 630.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M720.0,292.0 C737.5,292.0 737.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M720.0,646.0 C737.5,646.0 737.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M720.0,930.0 C737.5,930.0 737.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M720.0,1074.0 C737.5,1074.0 737.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<path d="M720.0,1218.0 C737.5,1218.0 737.5,759.0 755.0,759.0" fill="none" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4" opacity="0.85" marker-end="url(#inc)"/>
+<text x="790" y="689" font-size="12" font-style="italic" text-anchor="middle" fill="#d48806">«include»</text>
+<ellipse cx="422.0" cy="134.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="134.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Registrarsi</text>
+<ellipse cx="618.0" cy="134.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="134.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Effettuare il login</text>
+<ellipse cx="422.0" cy="204.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="197.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare il</text><text x="422.0" y="211.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">proprio profilo</text>
+<ellipse cx="618.0" cy="204.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="197.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Modificare il proprio</text><text x="618.0" y="211.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">profilo</text>
+<ellipse cx="422.0" cy="348.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="341.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare lista</text><text x="422.0" y="355.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">documenti</text>
+<ellipse cx="618.0" cy="348.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="341.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare dettaglio</text><text x="618.0" y="355.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">documento</text>
+<ellipse cx="422.0" cy="418.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="418.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Scaricare file PDF</text>
+<ellipse cx="618.0" cy="418.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="411.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Caricare nuovo</text><text x="618.0" y="425.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">documento</text>
+<ellipse cx="422.0" cy="488.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="488.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Modificare documento</text>
+<ellipse cx="618.0" cy="488.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="488.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Eliminare documento</text>
+<ellipse cx="422.0" cy="558.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="551.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Avviare analisi di</text><text x="422.0" y="565.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">conformità</text>
+<ellipse cx="422.0" cy="702.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="695.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare lista</text><text x="422.0" y="709.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">normative</text>
+<ellipse cx="618.0" cy="702.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="695.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare dettaglio</text><text x="618.0" y="709.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">normativa</text>
+<ellipse cx="422.0" cy="772.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="772.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Creare normativa</text>
+<ellipse cx="618.0" cy="772.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="772.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Modificare normativa</text>
+<ellipse cx="422.0" cy="842.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="842.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Eliminare normativa</text>
+<ellipse cx="422.0" cy="986.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="979.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare lista</text><text x="422.0" y="993.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">analisi</text>
+<ellipse cx="618.0" cy="986.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="979.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare dettaglio</text><text x="618.0" y="993.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">analisi</text>
+<ellipse cx="422.0" cy="1130.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="1130.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Scaricare report</text>
+<ellipse cx="422.0" cy="1274.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="1267.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare token</text><text x="422.0" y="1281.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">rimanenti</text>
+<ellipse cx="618.0" cy="1274.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="1267.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Aggiungere token a</text><text x="618.0" y="1281.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">utente</text>
+<ellipse cx="422.0" cy="1344.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="1337.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Visualizzare lista</text><text x="422.0" y="1351.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">utenti</text>
+<ellipse cx="618.0" cy="1344.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="1344.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Creare utente</text>
+<ellipse cx="422.0" cy="1414.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="422.0" y="1414.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Modificare utente</text>
+<ellipse cx="618.0" cy="1414.0" rx="84.0" ry="26.0" fill="#ffffff" stroke="#566573" stroke-width="1.6"/><text x="618.0" y="1414.0" font-size="12.5" font-weight="normal" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Eliminare utente</text>
+<ellipse cx="850.0" cy="759.0" rx="90.0" ry="35.0" fill="#fdf2e8" stroke="#d48806" stroke-width="1.6"/><text x="850.0" y="759.0" font-size="12.5" font-weight="bold" text-anchor="middle" dominant-baseline="middle" fill="#2c3e50">Autenticazione con JWT</text>
+<circle cx="70" cy="104" r="9" fill="#16a085"/><line x1="70" y1="113" x2="70" y2="138" stroke="#16a085" stroke-width="2.4"/><line x1="56" y1="122" x2="84" y2="122" stroke="#16a085" stroke-width="2.4"/><line x1="70" y1="138" x2="58" y2="156" stroke="#16a085" stroke-width="2.4"/><line x1="70" y1="138" x2="82" y2="156" stroke="#16a085" stroke-width="2.4"/><text x="70" y="174" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#16a085">Utente</text><text x="70" y="188" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#16a085">non autenticato</text>
+<circle cx="70" cy="733.0" r="9" fill="#2980b9"/><line x1="70" y1="742.0" x2="70" y2="767.0" stroke="#2980b9" stroke-width="2.4"/><line x1="56" y1="751.0" x2="84" y2="751.0" stroke="#2980b9" stroke-width="2.4"/><line x1="70" y1="767.0" x2="58" y2="785.0" stroke="#2980b9" stroke-width="2.4"/><line x1="70" y1="767.0" x2="82" y2="785.0" stroke="#2980b9" stroke-width="2.4"/><text x="70" y="803.0" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#2980b9">Utente</text>
+<circle cx="70" cy="1342" r="9" fill="#c0392b"/><line x1="70" y1="1351" x2="70" y2="1376" stroke="#c0392b" stroke-width="2.4"/><line x1="56" y1="1360" x2="84" y2="1360" stroke="#c0392b" stroke-width="2.4"/><line x1="70" y1="1376" x2="58" y2="1394" stroke="#c0392b" stroke-width="2.4"/><line x1="70" y1="1376" x2="82" y2="1394" stroke="#c0392b" stroke-width="2.4"/><text x="70" y="1412" font-size="12.5" font-weight="bold" text-anchor="middle" fill="#c0392b">Admin</text>
+<path d="M70,1318 L70,819.0" fill="none" stroke="#7f8c8d" stroke-width="1.6" stroke-dasharray="7 4" marker-end="url(#arrowG)"/>
+<text x="78" y="1074" font-size="11" font-style="italic" fill="#7f8c8d" transform="rotate(-90 48 1064)" text-anchor="middle">generalizzazione</text>
+<line x1="310" y1="1488" x2="340" y2="1488" stroke="#2980b9" stroke-width="1.2" opacity="0.6"/>
+<text x="346" y="1492" font-size="11" fill="#566573">associazione attore–caso d'uso</text>
+<line x1="540" y1="1488" x2="570" y2="1488" stroke="#d48806" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="576" y="1492" font-size="11" fill="#566573">«include» Autenticazione JWT</text>
+</svg>

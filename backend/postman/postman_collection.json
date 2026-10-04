@@ -1,0 +1,1192 @@
+﻿{
+  "info": {
+    "name": "Programmazione Avanzata",
+    "_postman_id": "collection-programmazione-avanzata",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "item": [
+            {
+              "name": "RegisterSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 201', () => pm.response.to.have.status(201));",
+                      "pm.test('success true', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.token).to.be.a('string');",
+                      "  pm.environment.set('JWT_TOKEN', body.data.token);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"utente@test.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/auth/register",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["auth", "register"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login",
+          "item": [
+            {
+              "name": "LoginSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e token presente', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.token).to.be.a('string');",
+                      "  if (body.data.role === 'admin') {",
+                      "    pm.environment.set('ADMIN_TOKEN', body.data.token);",
+                      "  }",
+                      "  pm.environment.set('JWT_TOKEN', body.data.token);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"utente@test.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/auth/login",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["auth", "login"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /auth/me",
+          "item": [
+            {
+              "name": "GetMeSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('profilo restituito senza password', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.have.property('id');",
+                      "  pm.expect(body.data).to.have.property('email');",
+                      "  pm.expect(body.data).to.have.property('role');",
+                      "  pm.expect(body.data).to.have.property('tokens');",
+                      "  pm.expect(body.data).to.not.have.property('password');",
+                      "  if (body.data.role !== 'admin') {",
+                      "    pm.environment.set('USER_ID', body.data.id);",
+                      "  }",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/auth/me",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["auth", "me"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /auth/me",
+          "item": [
+            {
+              "name": "UpdateMeSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('email e password aggiornate insieme', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.email).to.equal('utente_finale@test.com');",
+                      "  pm.expect(body.data).to.not.have.property('password');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"utente_finale@test.com\",\n  \"password\": \"AltroPassword456!\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/auth/me",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["auth", "me"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "GET All Users",
+          "item": [
+            {
+              "name": "GetAllUsersSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e data e array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.be.an('array');",
+                      "  if (body.data.length > 0) {",
+                      "    pm.expect(body.data[0]).to.not.have.property('password');",
+                      "  }",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET User By ID",
+          "item": [
+            {
+              "name": "GetUserByIdSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e campi corretti', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.have.property('id');",
+                      "  pm.expect(body.data).to.have.property('email');",
+                      "  pm.expect(body.data).to.have.property('role');",
+                      "  pm.expect(body.data).to.not.have.property('password');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/{{USER_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "{{USER_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST Create User",
+          "item": [
+            {
+              "name": "CreateUserSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 201', () => pm.response.to.have.status(201));",
+                      "pm.test('success true, ruolo sempre user', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.role).to.equal('user');",
+                      "  pm.expect(body.data).to.have.property('id');",
+                      "  pm.expect(body.data).to.have.property('email');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"nuovo@test.com\",\n  \"password\": \"Password123!\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH Update User",
+          "item": [
+            {
+              "name": "UpdateUserEmailSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('email aggiornata', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.email).to.equal('aggiornato@test.com');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"email\": \"aggiornato@test.com\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/{{USER_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "{{USER_ID}}"]
+                }
+              }
+            },
+            {
+              "name": "UpdateUserPromoteToAdmin",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('ruolo promosso ad admin', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.role).to.equal('admin');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"role\": \"admin\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/{{USER_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "{{USER_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /users/tokens",
+          "item": [
+            {
+              "name": "GetMyTokensSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('saldo token restituito', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.tokens).to.be.a('number');",
+                      "  pm.expect(body.data.tokens).to.be.at.least(0);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/tokens",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "tokens"]
+                }
+              }
+            },
+            {
+              "name": "GetMyTokensUnauthorized",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 401 senza token', () => pm.response.to.have.status(401));",
+                      "pm.test('success false', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.false;",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/tokens",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "tokens"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /users/:id/tokens",
+          "item": [
+            {
+              "name": "RechargeTokensSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('token ricaricati: saldo aggiornato restituito', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.have.property('id');",
+                      "  pm.expect(body.data).to.have.property('email');",
+                      "  pm.expect(body.data.tokens).to.be.a('number');",
+                      "  pm.expect(body.data.tokens).to.be.at.least(50);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"tokens\": 50\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/{{USER_ID}}/tokens",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "{{USER_ID}}", "tokens"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE User",
+          "item": [
+            {
+              "name": "DeleteUserSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e messaggio eliminazione', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.message).to.be.a('string');",
+                      "  pm.expect(body.data.message).to.include('Utente eliminato');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/users/{{USER_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["users", "{{USER_ID}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Regulations",
+      "item": [
+        {
+          "name": "GET /regulations",
+          "item": [
+            {
+              "name": "GetAllRegulationsSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e data è un array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/regulations",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["regulations"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /regulations",
+          "item": [
+            {
+              "name": "CreateRegulationSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 201', () => pm.response.to.have.status(201));",
+                      "pm.test('normativa creata e id salvato', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.id).to.be.a('number');",
+                      "  pm.expect(body.data.name).to.be.a('string');",
+                      "  pm.environment.set('REGULATION_ID', body.data.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "name",        "value": "CSRD",    "type": "text" },
+                    { "key": "version",     "value": "1.0",     "type": "text" },
+                    { "key": "file",        "src": "",          "type": "file", "description": "PDF opzionale: il testo estratto sostituisce la description" },
+                    { "key": "description", "value": "Corporate Sustainability Reporting Directive", "type": "text", "disabled": true }
+                  ]
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/regulations",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["regulations"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /regulations/:id",
+          "item": [
+            {
+              "name": "GetRegulationByIdSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('normativa corretta restituita', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.id).to.eql(parseInt(pm.environment.get('REGULATION_ID')));",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/regulations/{{REGULATION_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["regulations", "{{REGULATION_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /regulations/:id",
+          "item": [
+            {
+              "name": "UpdateRegulationSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('normativa aggiornata', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.version).to.eql('2.0');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"CSRD\",\n  \"description\": \"Corporate Sustainability Reporting Directive aggiornata\",\n  \"version\": \"2.0\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/regulations/{{REGULATION_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["regulations", "{{REGULATION_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /regulations/:id",
+          "item": [
+            {
+              "name": "DeleteRegulationSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('normativa eliminata', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.message).to.be.a('string');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{ADMIN_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/regulations/{{REGULATION_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["regulations", "{{REGULATION_ID}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Documents",
+      "item": [
+        {
+          "name": "GetAllDocuments",
+          "item": [
+            {
+              "name": "GetAllDocumentsSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e data array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.be.an('array');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "CreateDocument",
+          "item": [
+            {
+              "name": "CreateDocumentSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 201', () => pm.response.to.have.status(201));",
+                      "pm.test('documento creato con PDF su MinIO', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.id).to.be.a('number');",
+                      "  pm.expect(body.data.status).to.equal('pending');",
+                      "  pm.expect(body.data.filePath).to.be.a('string');",
+                      "  pm.environment.set('DOCUMENT_ID', body.data.id);",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "formdata",
+                  "formdata": [
+                    { "key": "title",       "value": "Documento di test ESG",              "type": "text" },
+                    { "key": "description", "value": "Bilancio di sostenibilità di test",   "type": "text" },
+                    { "key": "file",        "src": "C:/Users/PREDATOR/Programmazione_Avanzata/res/da987fa7_202606_PA_G00.pdf", "type": "file" }
+                  ]
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GetDocumentById",
+          "item": [
+            {
+              "name": "GetDocumentByIdSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('documento restituito', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.id).to.be.a('number');",
+                      "  pm.expect(body.data.title).to.be.a('string');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "DownloadDocumentFile",
+          "item": [
+            {
+              "name": "DownloadDocumentFileSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('risposta è un PDF', () => {",
+                      "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}/file",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}", "file"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "UpdateDocument",
+          "item": [
+            {
+              "name": "UpdateDocumentSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('documento aggiornato', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.title).to.equal('Titolo aggiornato');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  { "key": "Content-Type", "value": "application/json" },
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"title\": \"Titolo aggiornato\",\n  \"description\": \"Descrizione aggiornata\"\n}"
+                },
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "AnalyzeDocument",
+          "item": [
+            {
+              "name": "AnalyzeDocumentSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('status diventa analyzed e token scalati', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.document.status).to.equal('analyzed');",
+                      "  pm.expect(body.data.tokensRemaining).to.be.a('number');",
+                      "  pm.expect(body.data.tokensRemaining).to.be.at.least(0);",
+                      "});",
+                      "const body = pm.response.json();",
+                      "if (body.data && body.data.reportId) {",
+                      "  pm.environment.set('REPORT_ID', body.data.reportId);",
+                      "}"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}/analyze",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}", "analyze"]
+                }
+              }
+            },
+            {
+              "name": "AnalyzeDocumentInsufficientTokens",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 402 token insufficienti', () => pm.response.to.have.status(402));",
+                      "pm.test('success false e messaggio token', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.false;",
+                      "  pm.expect(body.error).to.include('token');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "POST",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}/analyze",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}", "analyze"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "DeleteDocument",
+          "item": [
+            {
+              "name": "DeleteDocumentSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('documento eliminato', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.message).to.be.a('string');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "DELETE",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/documents/{{DOCUMENT_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["documents", "{{DOCUMENT_ID}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analyses",
+      "item": [
+        {
+          "name": "GET /analyses",
+          "item": [
+            {
+              "name": "GetAllAnalysesSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('success true e data è un array', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data).to.be.an('array');",
+                      "  if (body.data.length > 0) {",
+                      "    pm.expect(body.data[0].status).to.equal('analyzed');",
+                      "    pm.environment.set('ANALYSIS_ID', body.data[0].id);",
+                      "  }",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/analyses",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["analyses"]
+                }
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /analyses/:id",
+          "item": [
+            {
+              "name": "GetAnalysisByIdSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('analisi restituita', () => {",
+                      "  const body = pm.response.json();",
+                      "  pm.expect(body.success).to.be.true;",
+                      "  pm.expect(body.data.status).to.equal('analyzed');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/analyses/{{ANALYSIS_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["analyses", "{{ANALYSIS_ID}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "GET /reports/:id",
+          "item": [
+            {
+              "name": "GetReportSuccess",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      "pm.test('Status code 200', () => pm.response.to.have.status(200));",
+                      "pm.test('risposta è un PDF', () => {",
+                      "  pm.expect(pm.response.headers.get('Content-Type')).to.include('application/pdf');",
+                      "});"
+                    ],
+                    "type": "text/javascript"
+                  }
+                }
+              ],
+              "request": {
+                "method": "GET",
+                "header": [
+                  { "key": "Authorization", "value": "Bearer {{JWT_TOKEN}}" }
+                ],
+                "url": {
+                  "raw": "http://{{HOST}}:{{PORT}}/reports/{{REPORT_ID}}",
+                  "protocol": "http",
+                  "host": ["{{HOST}}"],
+                  "port": "{{PORT}}",
+                  "path": ["reports", "{{REPORT_ID}}"]
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["typescript"],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "exclude": ["**/node_modules/**", "**/dist/**"],
+  "name": "Document Compliance Checker — ESG backend",
+  "readme": "README.md",
+  "includeVersion": true
+}

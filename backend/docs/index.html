@@ -1,0 +1,1431 @@
+<!DOCTYPE html><html class="default" lang="en" data-base="./"><head><meta charset="utf-8"/><meta http-equiv="x-ua-compatible" content="IE=edge"/><title>Document Compliance Checker — ESG backend - v1.0.0</title><meta name="description" content="Documentation for Document Compliance Checker — ESG backend"/><meta name="viewport" content="width=device-width, initial-scale=1"/><link rel="stylesheet" href="assets/style.css"/><link rel="stylesheet" href="assets/highlight.css"/><script defer src="assets/main.js"></script><script async src="assets/icons.js" id="tsd-icons-script"></script><script async src="assets/search.js" id="tsd-search-script"></script><script async src="assets/navigation.js" id="tsd-nav-script"></script><script async src="assets/hierarchy.js" id="tsd-hierarchy-script"></script></head><body><script>document.documentElement.dataset.theme = localStorage.getItem("tsd-theme") || "os";document.body.style.display="none";setTimeout(() => window.app?app.showPage():document.body.style.removeProperty("display"),500)</script><header class="tsd-page-toolbar"><div class="tsd-toolbar-contents container"><a href="index.html" class="title">Document Compliance Checker — ESG backend - v1.0.0</a><div id="tsd-toolbar-links"></div><button id="tsd-search-trigger" class="tsd-widget" aria-label="Search"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-search"></use></svg></button><dialog id="tsd-search" aria-label="Search"><input role="combobox" id="tsd-search-input" aria-controls="tsd-search-results" aria-autocomplete="list" aria-expanded="true" autocapitalize="off" autocomplete="off" placeholder="Search the docs" maxLength="100"/><ul role="listbox" id="tsd-search-results"></ul><div id="tsd-search-status" aria-live="polite" aria-atomic="true"><div>Preparing search index...</div></div></dialog><a href="#" class="tsd-widget menu" id="tsd-toolbar-menu-trigger" data-toggle="menu" aria-label="Menu"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-menu"></use></svg></a></div></header><div class="container container-main"><div class="col-content"><div class="tsd-page-title"><h1>Document Compliance Checker — ESG backend - v1.0.0</h1></div><div class="tsd-panel tsd-typography"><h1 id="programmazione-avanzata-document-compliance-checker" class="tsd-anchor-link">Programmazione Avanzata — Document Compliance Checker<a href="#programmazione-avanzata-document-compliance-checker" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h1>
+<h2 id="indice" class="tsd-anchor-link">Indice<a href="#indice" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<table>
+<thead>
+<tr>
+<th>Sezione</th>
+<th>Contenuto</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="#obiettivo-del-progetto">Obiettivo del Progetto</a></td>
+<td>Scopo del backend e funzionalita principali</td>
+</tr>
+<tr>
+<td><a href="#diagramma-dei-casi-duso">Diagramma dei Casi d'Uso</a></td>
+<td>Attori e interazioni principali con il sistema</td>
+</tr>
+<tr>
+<td><a href="#rotte-disponibili">Rotte Disponibili</a></td>
+<td>Panoramica completa degli endpoint</td>
+</tr>
+<tr>
+<td><a href="#autenticazione">Autenticazione</a></td>
+<td>Login e registrazione</td>
+</tr>
+<tr>
+<td><a href="#utenti">Utenti</a></td>
+<td>CRUD utenti e gestione token</td>
+</tr>
+<tr>
+<td><a href="#normative">Normative</a></td>
+<td>Catalogo normative e operazioni admin</td>
+</tr>
+<tr>
+<td><a href="#documenti">Documenti</a></td>
+<td>Gestione metadati e avvio analisi</td>
+</tr>
+<tr>
+<td><a href="#analisi">Analisi</a></td>
+<td>Recupero analisi precedenti</td>
+</tr>
+<tr>
+<td><a href="#report">Report</a></td>
+<td>Download report generati</td>
+</tr>
+<tr>
+<td><a href="#design-pattern-implementati">Design Pattern Implementati</a></td>
+<td>Pattern architetturali usati</td>
+</tr>
+<tr>
+<td><a href="#avvio-del-servizio">Avvio del Servizio</a></td>
+<td>Esecuzione locale con Docker</td>
+</tr>
+<tr>
+<td><a href="#testing">Testing</a></td>
+<td>Collection Postman ed environment</td>
+</tr>
+<tr>
+<td><a href="#note">Note</a></td>
+<td>Software e tecnologie usate</td>
+</tr>
+<tr>
+<td><a href="#autore">Autore</a></td>
+<td>Team e riferimenti GitHub</td>
+</tr>
+</tbody>
+</table>
+<h2 id="obiettivo-del-progetto" class="tsd-anchor-link">Obiettivo del Progetto<a href="#obiettivo-del-progetto" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Il progetto consiste nell'implementare il backend del progetto realizzato per l'Hack-AI-Thon, volto a verificare la conformità di documenti rispetto a normative ESG.
+Gli utenti autenticati possono caricare i metadati di un documento e richiederne l'analisi: il sistema produce un'<code>Analysis</code> con i relativi <code>ComplianceResult</code>, esportabile come report.</p>
+<p>Le operazioni principali sono:</p>
+<ul>
+<li>Autenticazione e registrazione con rilascio di JWT firmati in RS256</li>
+<li>Gestione utenti (solo admin)</li>
+<li>Gestione del catalogo normative (lettura pubblica, scrittura solo admin)</li>
+<li>Gestione dei metadati dei documenti e avvio analisi</li>
+<li>Consultazione delle analisi e dei risultati di conformità</li>
+<li>Recupero e download dei report</li>
+</ul>
+<h2 id="diagramma-dei-casi-duso" class="tsd-anchor-link">Diagramma dei Casi d'Uso<a href="#diagramma-dei-casi-duso" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Il diagramma mostra i tre attori del sistema e le operazioni che ciascuno può compiere. L'<strong>Admin</strong> eredita tutti i casi d'uso dell'<strong>Utente autenticato</strong> e ha accesso esclusivo alle operazioni di gestione.</p>
+<p><img src="media/use_case_diagram.svg" alt="Diagramma dei Casi d'Uso"></p>
+<h2 id="rotte-disponibili" class="tsd-anchor-link">Rotte Disponibili<a href="#rotte-disponibili" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="autenticazione" class="tsd-anchor-link">Autenticazione<a href="#autenticazione" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte di autenticazione</strong> permettono all'utente di registrarsi e di effettuare il login.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST</code></td>
+<td>/auth/register</td>
+<td>No</td>
+<td>Registra un nuovo utente e restituisce un token JWT</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/auth/login</td>
+<td>No</td>
+<td>Verifica le credenziali e restituisce un token JWT</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/auth/me</td>
+<td>Si</td>
+<td>Restituisce all'utente le proprie informazioni</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>/auth/me</td>
+<td>Si</td>
+<td>Permette all'utente di modificare le proprie informazioni</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="post-authregister" class="tsd-anchor-link">POST /auth/register<a href="#post-authregister" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Registra un nuovo utente nel sistema assegnandogli automaticamente il ruolo <code>user</code>. Dopo la registrazione avvenuta con successo, viene restituito un token JWT pronto all'uso.</p>
+<p><strong>Body richiesta:</strong></p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;user@example.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;password123&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<blockquote>
+<p>La password deve contenere almeno 8 caratteri.</p>
+</blockquote>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_EMAIL_ALREADY_REGISTERED</code> — Email già registrata</li>
+</ul>
+<p><strong>Successo:</strong> <code>201 Created</code> — Ritorna il token JWT e il ruolo <code>user</code></p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/auth/register
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as AuthController
+    participant DAO as UserDAO
+    participant DB@{ "type": "database" } as Database
+    participant JWT as JWT (RS256)
+
+    Client->>+Router: POST /auth/register<br/>{ email, password }
+
+    Router->>+Validate: validate({ body: registerSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida body (email valida,<br/>password >= 8 caratteri)
+        alt email non valida o password troppo corta
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: register(req, res)
+
+    Controller->>+DAO: findByEmail(email)
+    DAO->>+DB: SELECT * FROM users<br/>WHERE email = ?
+    DB-->>-DAO: User | null
+    DAO-->>-Controller: User | null
+
+    rect rgb(255, 240, 240)
+        alt email gia registrata
+            Controller-->>Client: ERR_EMAIL_ALREADY_REGISTERED<br/>{ error: "Email già registrata" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,DB: Creazione utente (sempre Role.User)
+        Controller->>+JWT: bcrypt.hash(password, 10)
+        JWT-->>-Controller: hashedPassword
+
+        Controller->>+DAO: create({ email, password: hashed, role: Role.User })
+        DAO->>+DB: INSERT INTO users (...)
+        DB-->>-DAO: User
+        DAO-->>-Controller: User
+
+        Controller->>+JWT: jwt.sign({ id, email, role },<br/>privateKey, { algorithm: RS256,<br/>expiresIn: JWT_EXPIRES_IN })
+        JWT-->>-Controller: accessToken
+    end
+
+    Controller-->>-Validate: { token, role }
+    Validate-->>-Router: { token, role }
+    Router-->>-Client: 201 Created<br/>{ token: "eyJ...", role: "user" }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="post-authlogin" class="tsd-anchor-link">POST /auth/login<a href="#post-authlogin" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Verifica le credenziali dell'utente e, se corrette, restituisce un token JWT firmato in RS256 da utilizzare nelle richieste successive.</p>
+<p><strong>Body richiesta:</strong></p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;user@example.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;password123&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_INVALID_CREDENTIALS</code> — Credenziali non valide</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna il token JWT e il ruolo dell'utente</p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/auth/login
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as AuthController
+    participant DAO as UserDAO
+    participant DB@{ "type": "database" } as Database
+    participant JWT as JWT (RS256)
+
+    Client->>+Router: POST /auth/login<br/>{ email, password }
+
+    Router->>+Validate: validate({ body: loginSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida body (email valida,<br/>password non vuota)
+        alt email non valida o password mancante
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: login(req, res)
+
+    Controller->>+DAO: findByEmail(email)
+    DAO->>+DB: SELECT * FROM users<br/>WHERE email = ?
+    DB-->>-DAO: User | null
+    DAO-->>-Controller: User | null
+
+    rect rgb(255, 240, 240)
+        alt utente non trovato
+            Controller-->>Client: ERR_INVALID_CREDENTIALS<br/>{ error: "Credenziali non valide" }
+        end
+    end
+
+    Controller->>+JWT: bcrypt.compare(password, user.password)
+    JWT-->>-Controller: boolean
+
+    rect rgb(255, 240, 240)
+        alt password errata
+            Controller-->>Client: ERR_INVALID_CREDENTIALS<br/>{ error: "Credenziali non valide" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,JWT: Autenticazione riuscita
+        Controller->>+JWT: jwt.sign({ id, email, role },<br/>privateKey, { algorithm: RS256,<br/>expiresIn: JWT_EXPIRES_IN })
+        JWT-->>-Controller: accessToken
+    end
+
+    Controller-->>-Validate: { token, role }
+    Validate-->>-Router: { token, role }
+    Router-->>-Client: 200 OK<br/>{ token: "eyJ...", role: "..." }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="get-authme" class="tsd-anchor-link">GET /auth/me<a href="#get-authme" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce le informazioni del profilo dell'utente autenticato (email, ruolo, token rimanenti).</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, email, role, tokens }</code></p>
+<hr>
+<h4 id="patch-authme" class="tsd-anchor-link">PATCH /auth/me<a href="#patch-authme" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Permette all'utente autenticato di aggiornare il proprio profilo (email e/o password).</p>
+<p><strong>Body richiesta</strong> (almeno un campo):</p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;nuova@email.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;nuovaPassword123&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+<li><code>ERR_EMAIL_IN_USE</code> — Email già in uso</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna i dati aggiornati dell'utente</p>
+<hr>
+<h3 id="utenti" class="tsd-anchor-link">Utenti<a href="#utenti" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte relative agli utenti</strong> permettono all'<strong>admin</strong> di effettuare operazioni <strong>CRUD</strong> relativamente alle informazioni degli utenti.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>/users</td>
+<td>Sì (admin)</td>
+<td>Restituisce la lista di tutti gli utenti</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/users/:id</td>
+<td>Sì (admin)</td>
+<td>Restituisce i dati di un singolo utente</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/users</td>
+<td>Sì (admin)</td>
+<td>Crea un nuovo utente</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>/users/:id</td>
+<td>Sì (admin)</td>
+<td>Modifica i dati di un utente esistente</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>/users/:id</td>
+<td>Sì (admin)</td>
+<td>Elimina un utente</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/users/token</td>
+<td>Sì</td>
+<td>Restituisce il numero di token rimanenti all'utente</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/users/:id/token</td>
+<td>Sì (admin)</td>
+<td>Permette all'admin di aggiungere token ad un utente</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="get-users" class="tsd-anchor-link">GET /users<a href="#get-users" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce la lista completa di tutti gli utenti registrati nel sistema. Accessibile solo agli amministratori.</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna un array di <code>{ id, email, role, tokens }</code></p>
+<hr>
+<h4 id="get-usersid" class="tsd-anchor-link">GET /users/:id<a href="#get-usersid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce i dati di un singolo utente dato il suo <code>id</code>. Accessibile solo agli amministratori.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore dell'utente</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, email, role, tokens }</code></p>
+<hr>
+<h4 id="post-users" class="tsd-anchor-link">POST /users<a href="#post-users" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Crea un nuovo utente nel sistema. Operazione riservata agli amministratori. Il ruolo assegnato di default è <code>user</code>.</p>
+<p><strong>Body richiesta:</strong></p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;nuovo@utente.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;password123&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_EMAIL_ALREADY_USED</code> — Email già utilizzata</li>
+</ul>
+<p><strong>Successo:</strong> <code>201 Created</code> — Ritorna <code>{ id, email, role: &quot;user&quot; }</code></p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/users
+    participant Auth as authenticate<br/>(JWT RS256)
+    participant Role as requireAdmin
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as UserController
+    participant DAO as UserDAO
+    participant DB@{ "type": "database" } as Database
+
+    Client->>+Router: POST /users<br/>Authorization: Bearer token<br/>{ email, password }
+
+    rect rgb(255, 240, 240)
+        note over Auth,Validate: Chain of Responsibility (middleware)
+        Router->>+Auth: authenticate(req, res, next)
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+        Auth-->>-Router: req.user
+
+        Router->>+Role: requireAdmin(req, res, next)
+        alt ruolo != Role.Admin
+            Role-->>Client: ERR_FORBIDDEN<br/>{ error: "Accesso riservato agli admin" }
+        end
+        Role-->>-Router: next()
+
+        Router->>+Validate: validate({ body: createUserSchema })
+        alt email non valida o password < 8 caratteri
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+        Validate-->>-Router: next()
+    end
+
+    Router->>+Controller: createUser(req, res)
+
+    Controller->>+DAO: findByEmail(email)
+    DAO->>+DB: SELECT * FROM users<br/>WHERE email = ?
+    DB-->>-DAO: User | null
+    DAO-->>-Controller: User | null
+
+    rect rgb(255, 240, 240)
+        alt email gia in uso
+            Controller-->>Client: ERR_EMAIL_ALREADY_USED<br/>{ error: "Email già utilizzata" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,DB: Creazione utente
+        Controller->>Controller: bcrypt.hash(password, 10)
+        Controller->>+DAO: create({ email, password: hashed, role: Role.User })
+        DAO->>+DB: INSERT INTO users (...)
+        DB-->>-DAO: User
+        DAO-->>-Controller: User
+    end
+
+    Controller-->>-Router: { id, email, role }
+    Router-->>-Client: 201 Created<br/>{ id, email, role: "user" }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="patch-usersid" class="tsd-anchor-link">PATCH /users/:id<a href="#patch-usersid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Aggiorna i dati di un utente esistente (email, password, ruolo). Operazione riservata agli amministratori. Il ruolo può essere promosso solo da <code>user</code> ad <code>admin</code> e non viceversa.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore dell'utente</li>
+</ul>
+<p><strong>Body richiesta</strong> (almeno un campo):</p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;email&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;aggiornata@email.com&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;password&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;nuovaPassword123&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;role&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;admin&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+<li><code>ERR_EMAIL_IN_USE</code> — Email già in uso</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, email, role }</code></p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/users/:id
+    participant Auth as authenticate<br/>(JWT RS256)
+    participant Role as requireAdmin
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as UserController
+    participant DAO as UserDAO
+    participant DB@{ "type": "database" } as Database
+
+    Client->>+Router: PATCH /users/:id<br/>Authorization: Bearer token<br/>{ email?, password?, role? }
+
+    rect rgb(255, 240, 240)
+        note over Auth,Validate: Chain of Responsibility (middleware)
+        Router->>+Auth: authenticate(req, res, next)
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+        Auth-->>-Router: req.user
+
+        Router->>+Role: requireAdmin(req, res, next)
+        alt ruolo != Role.Admin
+            Role-->>Client: ERR_FORBIDDEN<br/>{ error: "Accesso riservato agli admin" }
+        end
+        Role-->>-Router: next()
+
+        Router->>+Validate: validate({ params: idParamSchema,<br/>body: updateUserSchema })
+        alt id non intero, body vuoto o role non valido
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+        Validate-->>-Router: next()
+    end
+
+    Router->>+Controller: updateUser(req, res)
+
+    Controller->>+DAO: findByIdFull(req.params.id)
+    DAO->>+DB: SELECT * FROM users<br/>WHERE id = ?
+    DB-->>-DAO: User | null
+    DAO-->>-Controller: User | null
+
+    rect rgb(255, 240, 240)
+        alt utente non trovato
+            Controller-->>Client: ERR_USER_NOT_FOUND<br/>{ error: "Utente non trovato" }
+        end
+    end
+
+    rect rgb(240, 240, 255)
+        note over Controller,DB: Aggiornamento campi (solo se presenti)
+        alt email presente
+            Controller->>+DAO: findByEmail(email)
+            DAO->>+DB: SELECT * FROM users<br/>WHERE email = ?
+            DB-->>-DAO: User | null
+            DAO-->>-Controller: User | null
+            alt email gia in uso da altro utente
+                Controller-->>Client: ERR_EMAIL_IN_USE<br/>{ error: "Email già in uso" }
+            end
+            Controller->>Controller: user.email = email
+        end
+
+        alt password presente
+            Controller->>Controller: user.password = bcrypt.hash(password, 10)
+        end
+
+        alt role == Role.Admin e ruolo attuale == Role.User
+            Controller->>Controller: user.role = Role.Admin
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        Controller->>+DAO: user.save()
+        DAO->>+DB: UPDATE users SET ...<br/>WHERE id = ?
+        DB-->>-DAO: User
+        DAO-->>-Controller: User
+    end
+
+    Controller-->>-Router: { id, email, role }
+    Router-->>-Client: 200 OK<br/>{ id, email, role }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="delete-usersid" class="tsd-anchor-link">DELETE /users/:id<a href="#delete-usersid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Elimina definitivamente un utente dal sistema. Operazione riservata agli amministratori.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore dell'utente</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Conferma dell'eliminazione</p>
+<hr>
+<h4 id="get-userstoken" class="tsd-anchor-link">GET /users/token<a href="#get-userstoken" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce il numero di token rimanenti dell'utente autenticato.</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ tokens: &lt;numero&gt; }</code></p>
+<hr>
+<h4 id="post-usersidtoken" class="tsd-anchor-link">POST /users/:id/token<a href="#post-usersidtoken" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Aggiunge token all'account di un utente specifico. Operazione riservata agli amministratori.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore dell'utente</li>
+</ul>
+<p><strong>Body richiesta:</strong></p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;amount&quot;</span><span class="hl-0">: </span><span class="hl-3">50</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_USER_NOT_FOUND</code> — Utente non trovato</li>
+<li><code>ERR_TOKEN_CAP_EXCEEDED</code> — La ricarica supera il massimo consentito di 100 token</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna i token aggiornati dell'utente</p>
+<hr>
+<h3 id="normative" class="tsd-anchor-link">Normative<a href="#normative" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte delle normative</strong> permettono agli utenti di ottenere la lista delle normative e all'admin di poter modificare quest'ultima.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>/regulations</td>
+<td>Sì</td>
+<td>Restituisce la lista di tutte le normative</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/regulations/:id</td>
+<td>Sì</td>
+<td>Restituisce i dettagli di una singola normativa</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/regulations</td>
+<td>Sì (admin)</td>
+<td>Aggiunge una nuova normativa al catalogo</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>/regulations/:id</td>
+<td>Sì (admin)</td>
+<td>Modifica una normativa esistente</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>/regulations/:id</td>
+<td>Sì (admin)</td>
+<td>Elimina una normativa dal catalogo</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="get-regulations" class="tsd-anchor-link">GET /regulations<a href="#get-regulations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce la lista completa di tutte le normative presenti nel catalogo.</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna un array di <code>{ id, name, version, description }</code></p>
+<hr>
+<h4 id="get-regulationsid" class="tsd-anchor-link">GET /regulations/:id<a href="#get-regulationsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce i dettagli di una singola normativa dato il suo <code>id</code>.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore della normativa</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_REGULATION_NOT_FOUND</code> — Normativa non trovata</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, name, version, description }</code></p>
+<hr>
+<h4 id="post-regulations" class="tsd-anchor-link">POST /regulations<a href="#post-regulations" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Aggiunge una nuova normativa al catalogo. La descrizione può essere fornita direttamente nel body oppure estratta automaticamente da un file PDF allegato. Operazione riservata agli amministratori.</p>
+<p><strong>Body richiesta</strong> (<code>multipart/form-data</code>):</p>
+<pre><code><span class="hl-4">name</span><span class="hl-0">        → </span><span class="hl-4">nome</span><span class="hl-0"> </span><span class="hl-4">della</span><span class="hl-0"> </span><span class="hl-5">normativa</span><span class="hl-0"> (</span><span class="hl-4">es</span><span class="hl-0">. </span><span class="hl-2">&quot;ISO 14001&quot;</span><span class="hl-0">)</span><br/><span class="hl-4">version</span><span class="hl-0">     → </span><span class="hl-5">versione</span><span class="hl-0"> (</span><span class="hl-4">es</span><span class="hl-0">. </span><span class="hl-2">&quot;2015&quot;</span><span class="hl-0">)</span><br/><span class="hl-4">file</span><span class="hl-0">        → (</span><span class="hl-4">opzionale</span><span class="hl-0">) </span><span class="hl-4">file</span><span class="hl-0"> </span><span class="hl-6">PDF</span><span class="hl-0"> </span><span class="hl-4">da</span><span class="hl-0"> </span><span class="hl-4">cui</span><span class="hl-0"> </span><span class="hl-4">estrarre</span><span class="hl-0"> </span><span class="hl-4">la</span><span class="hl-0"> </span><span class="hl-4">descrizione</span>
+</code><button>Copy</button></pre>
+
+<blockquote>
+<p>Se non viene allegato un PDF, il campo <code>description</code> deve essere incluso nel body.</p>
+</blockquote>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_INVALID_FILE_TYPE</code> — Solo file PDF sono accettati</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_REGULATION_FIELDS_REQUIRED</code> — name, description e version sono obbligatori</li>
+<li><code>ERR_REGULATION_ALREADY_EXISTS</code> — Normativa già esistente</li>
+</ul>
+<p><strong>Successo:</strong> <code>201 Created</code> — Ritorna <code>{ id, name, version, description }</code></p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/regulations
+    participant Auth as authenticate<br/>(JWT RS256)
+    participant Role as requireAdmin
+    participant Upload as uploadPdf<br/>(multer memoryStorage)
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as RegulationController
+    participant PDF as PDFParse<br/>(pdf-parse)
+    participant DAO as RegulationDAO
+    participant DB@{ "type": "database" } as Database
+
+    Client->>+Router: POST /regulations<br/>Authorization: Bearer token<br/>multipart/form-data { name, version, file? }
+
+    rect rgb(255, 240, 240)
+        note over Auth,Validate: Chain of Responsibility (middleware)
+        Router->>+Auth: authenticate(req, res, next)
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+        Auth-->>-Router: req.user
+
+        Router->>+Role: requireAdmin(req, res, next)
+        alt ruolo != Role.Admin
+            Role-->>Client: ERR_FORBIDDEN<br/>{ error: "Accesso riservato agli admin" }
+        end
+        Role-->>-Router: next()
+
+        Router->>+Upload: uploadPdf(req, res, next)
+        alt file non PDF o > 10MB
+            Upload-->>Client: ERR_INVALID_FILE_TYPE<br/>{ error: "Solo file PDF sono accettati" }
+        end
+        Upload-->>-Router: req.file (buffer in RAM)
+
+        Router->>+Validate: validate({ body: createRegulationSchema })
+        alt name o version mancanti
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+        Validate-->>-Router: next()
+    end
+
+    Router->>+Controller: createRegulation(req, res)
+
+    rect rgb(240, 240, 255)
+        note over Controller,PDF: Estrazione testo dal PDF (se allegato)
+        alt req.file presente
+            Controller->>+PDF: getText({ data: req.file.buffer })
+            PDF-->>-Controller: description = result.text.trim()
+        end
+    end
+
+    rect rgb(255, 240, 240)
+        note over Controller: description obbligatoria (dal body o dal PDF)
+        alt description mancante
+            Controller-->>Client: ERR_REGULATION_FIELDS_REQUIRED<br/>{ error: "name, description e version sono obbligatori" }
+        end
+    end
+
+    Controller->>+DAO: findByName(name)
+    DAO->>+DB: SELECT * FROM regulations<br/>WHERE name = ?
+    DB-->>-DAO: Regulation | null
+    DAO-->>-Controller: Regulation | null
+
+    rect rgb(255, 240, 240)
+        alt normativa gia esistente
+            Controller-->>Client: ERR_REGULATION_ALREADY_EXISTS<br/>{ error: "Normativa già esistente" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,DB: Creazione normativa
+        Controller->>+DAO: create({ name, description, version })
+        DAO->>+DB: INSERT INTO regulations (...)
+        DB-->>-DAO: Regulation
+        DAO-->>-Controller: Regulation
+    end
+
+    Controller-->>-Router: Regulation
+    Router-->>-Client: 201 Created<br/>{ id, name, version, description }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="patch-regulationsid" class="tsd-anchor-link">PATCH /regulations/:id<a href="#patch-regulationsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Aggiorna i campi di una normativa esistente (nome, descrizione, versione). Operazione riservata agli amministratori.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore della normativa</li>
+</ul>
+<p><strong>Body richiesta</strong> (almeno un campo):</p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;name&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;ISO 14001 aggiornata&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;description&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Nuova descrizione&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;version&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;2024&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_REGULATION_NOT_FOUND</code> — Normativa non trovata</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna la normativa aggiornata</p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/regulations/:id
+    participant Auth as authenticate<br/>(JWT Middleware)
+    participant Role as requireAdmin<br/>(Role Middleware)
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as RegulationController
+    participant DAO as RegulationDAO
+    participant DB@{ shape: "database" } as Database
+
+    Client->>+Router: PATCH /regulations/:id<br/>Authorization: Bearer token<br/>{ name?, description?, version? }
+
+    Router->>+Auth: authenticate(req, res, next)
+
+    rect rgb(255, 240, 240)
+        note over Auth: Verifica JWT
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+    end
+
+    Auth->>+Role: requireAdmin(req, res, next)
+
+    rect rgb(255, 240, 240)
+        alt ruolo != Role.Admin
+            Role-->>Client: ERR_FORBIDDEN<br/>{ error: "Accesso riservato agli admin" }
+        end
+    end
+
+    Role->>+Validate: validate({ params: idParamSchema,<br/>body: updateRegulationSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida :id (intero) e body<br/>(almeno un campo, non vuoti)
+        alt id non intero o body vuoto
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: updateRegulation(req, res)
+
+    Controller->>+DAO: findById(req.params.id)
+    DAO->>+DB: SELECT * FROM regulations<br/>WHERE id = ?
+    DB-->>-DAO: Regulation | null
+    DAO-->>-Controller: Regulation | null
+
+    rect rgb(255, 240, 240)
+        alt normativa non trovata
+            Controller-->>Client: ERR_REGULATION_NOT_FOUND<br/>{ error: "Normativa non trovata" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,DB: Aggiornamento normativa
+        Controller->>+DAO: regulation.update({ name, description, version })
+        DAO->>+DB: UPDATE regulations SET<br/>name, description, version WHERE id = ?
+        DB-->>-DAO: ok
+        DAO-->>-Controller: Regulation aggiornata
+    end
+
+    Controller-->>-Validate: { regulation }
+    Validate-->>-Role: { regulation }
+    Role-->>-Auth: { regulation }
+    Auth-->>-Router: { regulation }
+    Router-->>-Client: 200 OK<br/>{ regulation }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="delete-regulationsid" class="tsd-anchor-link">DELETE /regulations/:id<a href="#delete-regulationsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Elimina definitivamente una normativa dal catalogo. Operazione riservata agli amministratori.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore della normativa</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_FORBIDDEN</code> — Accesso riservato agli admin</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_REGULATION_NOT_FOUND</code> — Normativa non trovata</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Conferma dell'eliminazione</p>
+<hr>
+<h3 id="documenti" class="tsd-anchor-link">Documenti<a href="#documenti" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte dei documenti</strong> permettono agli utenti di ottenere ed inviare nuovi documenti per l'analisi.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>/documents</td>
+<td>Sì</td>
+<td>Restituisce la lista dei documenti dell'utente</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/documents/:id</td>
+<td>Sì</td>
+<td>Restituisce i dettagli di un singolo documento</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/documents/:id/file</td>
+<td>Sì</td>
+<td>Scarica il file PDF originale del documento</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/documents</td>
+<td>Sì</td>
+<td>Carica i metadati di un nuovo documento</td>
+</tr>
+<tr>
+<td><code>PATCH</code></td>
+<td>/documents/:id</td>
+<td>Sì</td>
+<td>Modifica i metadati di un documento esistente</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>/documents/:id</td>
+<td>Sì</td>
+<td>Elimina un documento</td>
+</tr>
+<tr>
+<td><code>POST</code></td>
+<td>/documents/:id/analyze</td>
+<td>Sì</td>
+<td>Avvia l'analisi di conformità su un documento</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="get-documents" class="tsd-anchor-link">GET /documents<a href="#get-documents" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce la lista di tutti i documenti caricati dall'utente autenticato.</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna un array di <code>{ id, title, description, status, createdAt }</code></p>
+<hr>
+<h4 id="get-documentsid" class="tsd-anchor-link">GET /documents/:id<a href="#get-documentsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce i dettagli di un singolo documento dell'utente autenticato.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del documento</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_DOCUMENT_NOT_FOUND</code> — Documento non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, title, description, status, filePath, createdAt }</code></p>
+<hr>
+<h4 id="get-documentsidfile" class="tsd-anchor-link">GET /documents/:id/file<a href="#get-documentsidfile" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Scarica il file PDF originale associato a un documento dell'utente. Il file viene recuperato da MinIO e restituito come stream.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del documento</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_DOCUMENT_NOT_FOUND</code> — Documento non trovato</li>
+<li><code>ERR_FILE_NOT_AVAILABLE</code> — Il file originale non è disponibile per questo documento</li>
+<li><code>ERR_STORAGE_ERROR</code> — Errore durante l'operazione sul file storage</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna il file PDF con <code>Content-Type: application/pdf</code></p>
+<hr>
+<h4 id="post-documents" class="tsd-anchor-link">POST /documents<a href="#post-documents" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Carica un nuovo documento nel sistema. Il file PDF viene salvato su MinIO in maniera atomica: se l'upload fallisce, la riga nel database viene annullata tramite rollback della transazione.</p>
+<p><strong>Body richiesta</strong> (<code>multipart/form-data</code>):</p>
+<pre><code><span class="hl-4">title</span><span class="hl-0">       → </span><span class="hl-4">titolo</span><span class="hl-0"> </span><span class="hl-4">del</span><span class="hl-0"> </span><span class="hl-5">documento</span><span class="hl-0"> (</span><span class="hl-4">stringa</span><span class="hl-0"> </span><span class="hl-4">non</span><span class="hl-0"> </span><span class="hl-4">vuota</span><span class="hl-0">)</span><br/><span class="hl-4">description</span><span class="hl-0"> → </span><span class="hl-4">descrizione</span><span class="hl-0"> </span><span class="hl-4">del</span><span class="hl-0"> </span><span class="hl-5">documento</span><span class="hl-0"> (</span><span class="hl-4">stringa</span><span class="hl-0"> </span><span class="hl-4">non</span><span class="hl-0"> </span><span class="hl-4">vuota</span><span class="hl-0">)</span><br/><span class="hl-4">file</span><span class="hl-0">        → </span><span class="hl-4">file</span><span class="hl-0"> </span><span class="hl-5">PDF</span><span class="hl-0"> (</span><span class="hl-4">max</span><span class="hl-0"> </span><span class="hl-3">10</span><span class="hl-0"> </span><span class="hl-6">MB</span><span class="hl-0">)</span>
+</code><button>Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_INVALID_FILE_TYPE</code> — Solo file PDF sono accettati</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_FILE_REQUIRED</code> — Il file PDF è obbligatorio</li>
+<li><code>ERR_STORAGE_ERROR</code> — Errore durante l'operazione sul file storage</li>
+</ul>
+<p><strong>Successo:</strong> <code>201 Created</code> — Ritorna i metadati del documento creato</p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/documents
+    participant Auth as authenticate<br/>(JWT Middleware)
+    participant Upload as uploadPdf<br/>(Multer)
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as DocumentController
+    participant DAO as DocumentDAO
+    participant DB@{ shape: "database" } as Database
+    participant Minio as MinIO Storage
+
+    Client->>+Router: POST /documents<br/>multipart/form-data<br/>{ title, description, file }
+
+    Router->>+Auth: authenticate(req, res, next)
+
+    rect rgb(255, 240, 240)
+        note over Auth: Verifica JWT
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+    end
+
+    Auth->>+Upload: uploadPdf(req, res, next)
+
+    rect rgb(255, 240, 240)
+        note over Upload: Validazione file (max 10MB)
+        alt file non PDF
+            Upload-->>Client: ERR_INVALID_FILE_TYPE<br/>{ error: "Solo file PDF sono accettati" }
+        end
+    end
+
+    Upload->>+Validate: validate({ body: createDocumentSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida body (title, description<br/>stringhe non vuote)
+        alt title o description mancanti/vuoti
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: createDocument(req, res)
+
+    rect rgb(255, 240, 240)
+        alt file assente (req.file)
+            Controller-->>Client: ERR_FILE_REQUIRED<br/>{ error: "Il file PDF è obbligatorio" }
+        end
+    end
+
+    rect rgb(240, 248, 255)
+        note over Controller,Minio: Transazione DB (atomica)<br/>create + upload + update filePath
+        Controller->>+DB: BEGIN TRANSACTION
+
+        Controller->>DAO: create({ userId, title, description }, transaction)
+        DAO->>DB: INSERT INTO documents<br/>{ userId, title, description }
+
+        Controller->>+Minio: putObject(DOCUMENTS_BUCKET,<br/>"<id>/original.pdf", buffer)
+        Minio-->>-Controller: ok
+
+        Controller->>DAO: document.update({ filePath }, { transaction })
+        DAO->>DB: UPDATE documents SET filePath = ?
+
+        Controller->>DB: COMMIT
+        DB-->>-Controller: Document
+    end
+
+    rect rgb(255, 240, 240)
+        alt errore upload MinIO o scrittura DB
+            note over Controller,Minio: ROLLBACK automatico (INSERT annullato)<br/>+ rimozione file orfano se già caricato
+            Controller->>+Minio: removeObject(DOCUMENTS_BUCKET, fileKey)
+            Minio-->>-Controller: ok
+            Controller-->>Client: ERR_STORAGE_ERROR<br/>{ error: "Errore durante l'operazione sul file storage" }
+        end
+    end
+
+    Controller-->>-Validate: { document }
+    Validate-->>-Upload: { document }
+    Upload-->>-Auth: { document }
+    Auth-->>-Router: { document }
+    Router-->>-Client: 201 Created<br/>{ document }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="patch-documentsid" class="tsd-anchor-link">PATCH /documents/:id<a href="#patch-documentsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Aggiorna i metadati (titolo e/o descrizione) di un documento esistente dell'utente autenticato. Il documento deve appartenere all'utente che effettua la richiesta.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del documento</li>
+</ul>
+<p><strong>Body richiesta</strong> (almeno un campo):</p>
+<pre><code class="json"><span class="hl-0">{</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;title&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Nuovo titolo&quot;</span><span class="hl-0">,</span><br/><span class="hl-0">  </span><span class="hl-1">&quot;description&quot;</span><span class="hl-0">: </span><span class="hl-2">&quot;Nuova descrizione&quot;</span><br/><span class="hl-0">}</span>
+</code><button type="button">Copy</button></pre>
+
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_DOCUMENT_NOT_FOUND</code> — Documento non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna il documento aggiornato</p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/documents/:id
+    participant Auth as authenticate<br/>(JWT Middleware)
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as DocumentController
+    participant DAO as DocumentDAO
+    participant DB@{ shape: "database" } as Database
+
+    Client->>+Router: PATCH /documents/:id<br/>{ title?, description? }
+
+    Router->>+Auth: authenticate(req, res, next)
+
+    rect rgb(255, 240, 240)
+        note over Auth: Verifica JWT
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+    end
+
+    Auth->>+Validate: validate({ params: idParamSchema,<br/>body: updateDocumentSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida :id (intero) e body<br/>(title?/description?, almeno uno)
+        alt dati non validi
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: updateDocument(req, res)
+
+    Controller->>+DAO: findByIdAndUser(id, userId)
+    DAO->>+DB: SELECT * FROM documents<br/>WHERE id = ? AND userId = ?
+    DB-->>-DAO: Document | null
+    DAO-->>-Controller: Document | null
+
+    rect rgb(255, 240, 240)
+        alt documento non trovato
+            Controller-->>Client: ERR_DOCUMENT_NOT_FOUND<br/>{ error: "Documento non trovato" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,DB: Aggiornamento documento
+        Controller->>+DAO: document.update({ title, description })
+        DAO->>+DB: UPDATE documents<br/>SET title = ?, description = ?<br/>WHERE id = ?
+        DB-->>-DAO: ok
+        DAO-->>-Controller: Document aggiornato
+    end
+
+    Controller-->>-Validate: { document }
+    Validate-->>-Auth: { document }
+    Auth-->>-Router: { document }
+    Router-->>-Client: 200 OK<br/>{ document }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h4 id="delete-documentsid" class="tsd-anchor-link">DELETE /documents/:id<a href="#delete-documentsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Elimina un documento dell'utente autenticato. Il documento deve appartenere all'utente che effettua la richiesta.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del documento</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_DOCUMENT_NOT_FOUND</code> — Documento non trovato</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Conferma dell'eliminazione</p>
+<hr>
+<h4 id="post-documentsidanalyze" class="tsd-anchor-link">POST /documents/:id/analyze<a href="#post-documentsidanalyze" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Avvia l'analisi di conformità ESG su un documento. Il sistema genera un report PDF, lo carica su MinIO e registra l'analisi nel database tramite transazione atomica. Il costo dell'operazione è <strong>10 token</strong>. Il documento deve essere nello stato <code>pending</code> (non ancora analizzato).</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del documento</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_DOCUMENT_NOT_FOUND</code> — Documento non trovato</li>
+<li><code>ERR_DOCUMENT_ALREADY_ANALYZED</code> — Il documento è già stato analizzato</li>
+<li><code>ERR_INSUFFICIENT_TOKENS</code> — Token insufficienti per eseguire l'analisi</li>
+<li><code>ERR_STORAGE_ERROR</code> — Errore durante l'operazione sul file storage</li>
+<li><code>ERR_DATABASE_ERROR</code> — Errore durante l'operazione sul database</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ document, reportId, tokensRemaining }</code></p>
+<pre><code class="mermaid">sequenceDiagram
+    autonumber
+    actor Client
+    participant Router as Router<br/>/documents/:id/analyze
+    participant Auth as authenticate<br/>(JWT Middleware)
+    participant Validate as validate<br/>(Zod Middleware)
+    participant Controller as DocumentController
+    participant DocDAO as DocumentDAO
+    participant UserDAO as UserDAO
+    participant DB@{ shape: "database" } as Database
+    participant Minio as MinIO Storage
+    participant ReportDAO as ReportDAO
+
+    Client->>+Router: POST /documents/:id/analyze
+
+    Router->>+Auth: authenticate(req, res, next)
+
+    rect rgb(255, 240, 240)
+        note over Auth: Verifica JWT
+        alt token mancante o non valido
+            Auth-->>Client: ERR_TOKEN_MISSING / ERR_TOKEN_INVALID<br/>{ error: "Token mancante / non valido o scaduto" }
+        end
+    end
+
+    Auth->>+Validate: validate({ params: idParamSchema })
+
+    rect rgb(255, 240, 240)
+        note over Validate: Valida :id (intero positivo)
+        alt id non valido
+            Validate-->>Client: ERR_VALIDATION<br/>{ error: "Dati della richiesta non validi",<br/>details: [...] }
+        end
+    end
+
+    Validate->>+Controller: analyzeDocument(req, res)
+
+    Controller->>+DocDAO: findByIdAndUser(id, userId)
+    DocDAO->>+DB: SELECT * FROM documents<br/>WHERE id = ? AND userId = ?
+    DB-->>-DocDAO: Document | null
+    DocDAO-->>-Controller: Document | null
+
+    rect rgb(255, 240, 240)
+        alt documento non trovato
+            Controller-->>Client: ERR_DOCUMENT_NOT_FOUND<br/>{ error: "Documento non trovato" }
+        end
+    end
+
+    rect rgb(255, 240, 240)
+        alt document.status === "analyzed"
+            Controller-->>Client: ERR_DOCUMENT_ALREADY_ANALYZED<br/>{ error: "Il documento è già stato analizzato" }
+        end
+    end
+
+    Controller->>+UserDAO: findByIdFull(userId)
+    UserDAO->>+DB: SELECT * FROM users WHERE id = ?
+    DB-->>-UserDAO: User | null
+    UserDAO-->>-Controller: User | null
+
+    rect rgb(255, 240, 240)
+        alt utente non trovato o tokens < ANALYSIS_TOKEN_COST (10)
+            Controller-->>Client: ERR_INSUFFICIENT_TOKENS<br/>{ error: "Token insufficienti per eseguire l'analisi" }
+        end
+    end
+
+    rect rgb(240, 255, 240)
+        note over Controller,Minio: Generazione e upload report ESG
+        Controller->>Controller: generateReport(document)
+        note over Controller: Genera PDF ESG<br/>con pdfkit in memoria
+        Controller->>+Minio: putObject(REPORTS_BUCKET,<br/>"<id>/report.pdf", pdfBuffer)
+        Minio-->>-Controller: ok
+    end
+
+    rect rgb(255, 240, 240)
+        alt errore generazione PDF o upload MinIO
+            Controller-->>Client: ERR_STORAGE_ERROR<br/>{ error: "Errore durante l'operazione sul file storage" }
+        end
+    end
+
+    rect rgb(240, 248, 255)
+        note over Controller,ReportDAO: Transazione DB (atomica)<br/>tutte le scritture o nessuna
+        Controller->>+DB: BEGIN TRANSACTION
+
+        Controller->>DocDAO: document.update({ status: "analyzed", reportPath }, { transaction })
+        DocDAO->>DB: UPDATE documents SET<br/>status, reportPath WHERE id = ?
+
+        Controller->>UserDAO: deductTokens(userId, 10, transaction)
+        UserDAO->>DB: UPDATE users SET<br/>tokens = tokens - 10 WHERE id = ?
+
+        Controller->>ReportDAO: create({ documentId, userId, filePath }, transaction)
+        ReportDAO->>DB: INSERT INTO reports<br/>{ documentId, userId, filePath }
+
+        Controller->>DB: COMMIT
+        DB-->>-Controller: reportId
+    end
+
+    rect rgb(255, 240, 240)
+        alt errore durante la transazione
+            note over Controller,Minio: ROLLBACK + cleanup file orfano
+            Controller->>+Minio: removeObject(REPORTS_BUCKET, reportKey)
+            Minio-->>-Controller: ok
+            Controller-->>Client: ERR_DATABASE_ERROR<br/>{ error: "Errore durante l'operazione sul database" }
+        end
+    end
+
+    Controller-->>-Validate: { document, reportId, tokensRemaining }
+    Validate-->>-Auth: { document, reportId, tokensRemaining }
+    Auth-->>-Router: { document, reportId, tokensRemaining }
+    Router-->>-Client: 200 OK<br/>{ document, reportId, tokensRemaining }
+</code><button type="button">Copy</button></pre>
+
+<hr>
+<h3 id="analisi" class="tsd-anchor-link">Analisi<a href="#analisi" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte dell'analisi</strong> permettono agli utenti di recuperare le analisi effettuate in passato.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>/analyses</td>
+<td>Sì</td>
+<td>Restituisce la lista di tutte le analisi dell'utente</td>
+</tr>
+<tr>
+<td><code>GET</code></td>
+<td>/analyses/:id</td>
+<td>Sì</td>
+<td>Restituisce i dettagli e i risultati di una singola analisi</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="get-analyses" class="tsd-anchor-link">GET /analyses<a href="#get-analyses" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce la lista di tutte le analisi effettuate dall'utente autenticato, ordinate dalla più recente.</p>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna un array di <code>{ id, documentId, createdAt, complianceResults }</code></p>
+<hr>
+<h4 id="get-analysesid" class="tsd-anchor-link">GET /analyses/:id<a href="#get-analysesid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Restituisce i dettagli completi di una singola analisi, inclusi tutti i <code>ComplianceResult</code> associati. L'analisi deve appartenere all'utente autenticato.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore dell'analisi</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_ANALYSIS_NOT_FOUND</code> — Analisi non trovata</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna <code>{ id, documentId, createdAt, complianceResults: [...] }</code></p>
+<hr>
+<h3 id="report" class="tsd-anchor-link">Report<a href="#report" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<p>Le <strong>rotte dei report</strong> permettono agli utenti di recuperare i report generati in passato.</p>
+<table>
+<thead>
+<tr>
+<th>METODO</th>
+<th>ROTTA</th>
+<th>JWT RICHIESTO</th>
+<th>DESCRIZIONE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GET</code></td>
+<td>/reports/:id</td>
+<td>Sì</td>
+<td>Restituisce il report generato da un'analisi</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h4 id="get-reportsid" class="tsd-anchor-link">GET /reports/:id<a href="#get-reportsid" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h4>
+<p>Scarica il report PDF generato in seguito all'analisi di conformità ESG di un documento. Il file viene recuperato da MinIO e restituito come stream. Il report deve appartenere all'utente autenticato.</p>
+<p><strong>Parametri URL:</strong></p>
+<ul>
+<li><code>id</code> — intero positivo, identificatore del report</li>
+</ul>
+<p><strong>Errori possibili:</strong></p>
+<ul>
+<li><code>ERR_TOKEN_MISSING</code> — Token mancante</li>
+<li><code>ERR_TOKEN_INVALID</code> — Token non valido o scaduto</li>
+<li><code>ERR_VALIDATION</code> — Dati della richiesta non validi</li>
+<li><code>ERR_REPORT_NOT_FOUND</code> — Report non trovato</li>
+<li><code>ERR_STORAGE_ERROR</code> — Errore durante l'operazione sul file storage</li>
+</ul>
+<p><strong>Successo:</strong> <code>200 OK</code> — Ritorna il file PDF con <code>Content-Type: application/pdf</code></p>
+<hr>
+<h2 id="design-pattern-implementati" class="tsd-anchor-link">Design Pattern Implementati<a href="#design-pattern-implementati" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p><strong>Singleton</strong> — gestisce la connessione al database (<a href="modules/singleton_database.html">database.ts</a>) e il client MinIO (<a href="modules/singleton_minio.html">minio.ts</a>) garantendo un'unica istanza condivisa lungo tutto il ciclo di vita dell'applicazione.
+<em>Perché:</em> aprire una nuova connessione/client a ogni richiesta sprecherebbe risorse e potrebbe esaurire il pool del DB; un'unica istanza centralizza la configurazione (un solo punto da modificare) e assicura che tutto il codice lavori sulla stessa connessione.</p>
+<p><strong>Factory</strong> — crea oggetti di risposta standardizzati di successo/errore con HTTP status code e messaggi coerenti (<a href="modules/factory_responseFactory.html">responseFactory.ts</a>, <a href="modules/factory_error.html">error.ts</a>).
+<em>Perché:</em> disaccoppia i controller dalla forma della risposta: aggiungere o modificare un errore significa toccare una sola classe/enum, non tutti gli endpoint, garantendo messaggi e status uniformi su tutta l'API.</p>
+<p><strong>Chain of Responsibility</strong> — filtra le richieste attraverso una catena di middleware: autenticazione JWT → verifica ruolo → validazione (Zod) → logica di business → gestione errori centralizzata.
+<em>Perché:</em> ogni middleware ha una singola responsabilità ed è componibile e riordinabile per rotta; la richiesta viene interrotta al primo controllo fallito, così i controller restano puliti e non devono conoscere i dettagli di auth e validazione.</p>
+<p><strong>Data Access Object (DAO)</strong> — isola l'accesso ai dati nei <a href="media/dao">dao/</a>, incapsulando le query Sequelize dietro un'interfaccia comune (<a href="modules/dao_IDao.html">IDao.ts</a>).
+<em>Perché:</em> la logica di business non dipende dai dettagli del DB, le query (e accorgimenti come i <code>SAFE_ATTRIBUTES</code> sugli utenti) sono centralizzate e riusabili, e nei test i DAO si possono mockare facilmente senza un database reale.</p>
+<p><strong>Model-View-Controller (MVC)</strong> — separa rotte, controller e modelli Sequelize, dividendo gli incarichi tra i vari elementi.
+<em>Perché:</em> la separazione delle responsabilità rende il codice più leggibile, testabile e manutenibile, permettendo di modificare un livello (es. la persistenza) senza impattare gli altri.</p>
+<h2 id="avvio-del-servizio" class="tsd-anchor-link">Avvio del Servizio<a href="#avvio-del-servizio" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Requisiti: Docker installato</p>
+<pre><code class="bash"><span class="hl-5">$</span><span class="hl-0"> </span><span class="hl-2">docker-compose</span><span class="hl-0"> </span><span class="hl-2">up</span>
+</code><button type="button">Copy</button></pre>
+
+<p>Il servizio è disponibile sulla porta <strong>3000</strong> tramite cURL o Postman.</p>
+<h2 id="testing" class="tsd-anchor-link">Testing<a href="#testing" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<p>Importare la collection Postman fornita <code>postman_collection.json</code>  e l'environment fornito <code>postman_environment.json</code> per eseguire i test predefiniti su tutti gli endpoint. I token JWT sono firmati con chiave RS256. Inoltre, sono stati utilizzati dei test automatizzati tramite jest.
+I test tramite jest possono essere eseguiti tramite il seguente comando:</p>
+<pre><code class="bash"><span class="hl-5">$</span><span class="hl-0"> </span><span class="hl-2">docker</span><span class="hl-0"> </span><span class="hl-2">compose</span><span class="hl-0"> </span><span class="hl-2">exec</span><span class="hl-0"> </span><span class="hl-2">app</span><span class="hl-0"> </span><span class="hl-2">npm</span><span class="hl-0"> </span><span class="hl-2">test</span>
+</code><button type="button">Copy</button></pre>
+
+<p>I risultati dei test sono mostrati nella seguente figura:</p>
+<p align="center">
+  <img src="media/test_jest.png" alt="Risultato test jest">
+</p>
+<p>Per effettuare le operazioni di POST di documenti o normative, utilizzare i file PDF presenti nella cartella <code>res/</code>, denominati rispettivamente <code>Documento_Test.pdf</code> e <code>Normativa_Test.pdf</code>.</p>
+<h2 id="note" class="tsd-anchor-link">Note<a href="#note" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<h3 id="software-utilizzati" class="tsd-anchor-link">Software Utilizzati<a href="#software-utilizzati" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><a href="https://code.visualstudio.com/">Visual Studio Code</a> - IDE</li>
+<li><a href="https://www.docker.com/">Docker</a> - Gestore di container</li>
+<li><a href="https://www.postman.com/">Postman</a> - API Testing Platform</li>
+</ul>
+<h3 id="tecnologie-usate" class="tsd-anchor-link">Tecnologie usate<a href="#tecnologie-usate" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h3>
+<ul>
+<li><strong>Node.js</strong> - Runtime JavaScript</li>
+<li><strong>TypeScript</strong> - Linguaggio utilizzato per lo sviluppo</li>
+<li><strong>Express</strong> - Framework web per API REST</li>
+<li><strong>Sequelize</strong> - ORM per database relazionali</li>
+<li><strong>PostgreSQL</strong> - Database relazionale</li>
+<li><strong>JWT (RS256) con jsonwebtoken</strong> - Autenticazione e autorizzazione</li>
+<li><strong>bcryptjs</strong> - Hashing sicuro delle password</li>
+<li><strong>dotenv</strong> - Gestione delle variabili d'ambiente</li>
+<li><strong>multer</strong> - Gestione upload multipart/form-data</li>
+<li><strong>MinIO (SDK minio)</strong> - Object storage per file e documenti</li>
+<li><strong>pdf-parse</strong> - Estrazione contenuto dai PDF</li>
+<li><strong>PDFKit</strong> - Generazione report in formato PDF</li>
+<li><strong>pg / pg-hstore</strong> - Driver PostgreSQL per Sequelize</li>
+<li><strong>express-async-errors</strong> - Gestione errori asincroni in Express</li>
+<li><strong>ts-node-dev</strong> - Ambiente di sviluppo con reload automatico</li>
+<li><strong>jest</strong> - Sistema di testing automatizzato</li>
+</ul>
+<h2 id="autore" class="tsd-anchor-link">Autore<a href="#autore" aria-label="Permalink" class="tsd-anchor-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><use href="assets/icons.svg#icon-anchor"></use></svg></a></h2>
+<ul>
+<li>Dario Tommasi (<a href="https://github.com/zDarius">Github</a>)</li>
+<li>Andrea Bargilli (<a href="https://github.com/Bargi20">Github</a>)</li>
+</ul>
+</div></div><div class="col-sidebar"><div class="page-menu"><div class="tsd-navigation settings"><details class="tsd-accordion"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>Settings</h3></summary><div class="tsd-accordion-details"><div class="tsd-filter-visibility"><span class="settings-label">Member Visibility</span><ul id="tsd-filter-options"><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-protected" name="protected"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Protected</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-inherited" name="inherited" checked/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>Inherited</span></label></li><li class="tsd-filter-item"><label class="tsd-filter-input"><input type="checkbox" id="tsd-filter-external" name="external"/><svg width="32" height="32" viewBox="0 0 32 32" aria-hidden="true"><rect class="tsd-checkbox-background" width="30" height="30" x="1" y="1" rx="6" fill="none"></rect><path class="tsd-checkbox-checkmark" d="M8.35422 16.8214L13.2143 21.75L24.6458 10.25" stroke="none" stroke-width="3.5" stroke-linejoin="round" fill="none"></path></svg><span>External</span></label></li></ul></div><div class="tsd-theme-toggle"><label class="settings-label" for="tsd-theme">Theme</label><select id="tsd-theme"><option value="os">OS</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div></details></div><details open class="tsd-accordion tsd-page-navigation"><summary class="tsd-accordion-summary"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true"><use href="assets/icons.svg#icon-chevronDown"></use></svg><h3>On This Page</h3></summary><div class="tsd-accordion-details"><a href="#programmazione-avanzata-document-compliance-checker"><span>Programmazione <wbr/>Avanzata — <wbr/>Document <wbr/>Compliance <wbr/>Checker</span></a><ul><li><a href="#indice"><span>Indice</span></a></li><li><a href="#obiettivo-del-progetto"><span>Obiettivo del <wbr/>Progetto</span></a></li><li><a href="#diagramma-dei-casi-duso"><span>Diagramma dei <wbr/>Casi d&#39;<wbr/>Uso</span></a></li><li><a href="#rotte-disponibili"><span>Rotte <wbr/>Disponibili</span></a></li><li><ul><li><a href="#autenticazione"><span>Autenticazione</span></a></li><li><ul><li><a href="#post-authregister"><span>POST /auth/register</span></a></li><li><a href="#post-authlogin"><span>POST /auth/login</span></a></li><li><a href="#get-authme"><span>GET /auth/me</span></a></li><li><a href="#patch-authme"><span>PATCH /auth/me</span></a></li></ul></li><li><a href="#utenti"><span>Utenti</span></a></li><li><ul><li><a href="#get-users"><span>GET /users</span></a></li><li><a href="#get-usersid"><span>GET /users/:id</span></a></li><li><a href="#post-users"><span>POST /users</span></a></li><li><a href="#patch-usersid"><span>PATCH /users/:id</span></a></li><li><a href="#delete-usersid"><span>DELETE /users/:id</span></a></li><li><a href="#get-userstoken"><span>GET /users/token</span></a></li><li><a href="#post-usersidtoken"><span>POST /users/:id/token</span></a></li></ul></li><li><a href="#normative"><span>Normative</span></a></li><li><ul><li><a href="#get-regulations"><span>GET /regulations</span></a></li><li><a href="#get-regulationsid"><span>GET /regulations/:id</span></a></li><li><a href="#post-regulations"><span>POST /regulations</span></a></li><li><a href="#patch-regulationsid"><span>PATCH /regulations/:id</span></a></li><li><a href="#delete-regulationsid"><span>DELETE /regulations/:id</span></a></li></ul></li><li><a href="#documenti"><span>Documenti</span></a></li><li><ul><li><a href="#get-documents"><span>GET /documents</span></a></li><li><a href="#get-documentsid"><span>GET /documents/:id</span></a></li><li><a href="#get-documentsidfile"><span>GET /documents/:id/file</span></a></li><li><a href="#post-documents"><span>POST /documents</span></a></li><li><a href="#patch-documentsid"><span>PATCH /documents/:id</span></a></li><li><a href="#delete-documentsid"><span>DELETE /documents/:id</span></a></li><li><a href="#post-documentsidanalyze"><span>POST /documents/:id/analyze</span></a></li></ul></li><li><a href="#analisi"><span>Analisi</span></a></li><li><ul><li><a href="#get-analyses"><span>GET /analyses</span></a></li><li><a href="#get-analysesid"><span>GET /analyses/:id</span></a></li></ul></li><li><a href="#report"><span>Report</span></a></li><li><ul><li><a href="#get-reportsid"><span>GET /reports/:id</span></a></li></ul></li></ul></li><li><a href="#design-pattern-implementati"><span>Design <wbr/>Pattern <wbr/>Implementati</span></a></li><li><a href="#avvio-del-servizio"><span>Avvio del <wbr/>Servizio</span></a></li><li><a href="#testing"><span>Testing</span></a></li><li><a href="#note"><span>Note</span></a></li><li><ul><li><a href="#software-utilizzati"><span>Software <wbr/>Utilizzati</span></a></li><li><a href="#tecnologie-usate"><span>Tecnologie usate</span></a></li></ul></li><li><a href="#autore"><span>Autore</span></a></li></ul></div></details></div><div class="site-menu"><nav class="tsd-navigation"><a href="modules.html">Document Compliance Checker — ESG backend - v1.0.0</a><ul class="tsd-small-nested-navigation" id="tsd-nav-container"><li>Loading...</li></ul></nav></div></div></div><footer><p class="tsd-generator">Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></footer><div class="overlay"></div></body></html>
