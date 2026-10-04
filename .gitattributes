@@ -1,0 +1,9 @@
+# Fine riga normalizzate nel repository; LF obbligatorio per i file usati nei container Linux
+* text=auto
+Dockerfile text eol=lf
+*.sh text eol=lf
+*.conf text eol=lf
+
+*.pdf binary
+*.png binary
+*.ico binary
